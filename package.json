@@ -4,7 +4,8 @@
   "description": "Pre/Post hooking mechanism",
   "main": "index.js",
   "scripts": {
-    "test": "mocha tests.js"
+    "test": "mocha tests.js",
+    "style": "eslint ./; true"
   },
   "repository": {
     "type": "git",
