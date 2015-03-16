@@ -1,6 +1,7 @@
 "use strict";
 
 var _ = require( "lodash" ),
+	di = require( "asyncdi" ),
 	async = require( "async" );
 
 function init( opts ){
@@ -71,6 +72,7 @@ var methods = {
 		var args = _.toArray( arguments );
 		args[ 0 ] = event.name;
 		this[ event.type ].apply( this, args );
+		return this;
 	},
 
 	/**
@@ -93,37 +95,59 @@ var methods = {
 				this.__hooks[ event.type ][ event.name ] = [];
 			}
 		}, this );
+		return this;
 	},
 
 	/**
 	 * Applies `iteratee` to all subscribed hooks.
+	 * @param {*} [context] - the context in which `iteratee` will be called
 	 * @param {String} typedEvent - namespaced event, e.g. `pre:save`
 	 * @param {Function} iteratee - the function to apply to the hooks
 	 * @param {Function} [done] - will be called when all hooks have been called
 	 */
-	hooks : function( typedEvent,
+	hooks : function( context,
+					  typedEvent,
 					  iteratee,
 					  done ){
-		var event = parseTypedEvent( typedEvent );
-		async.eachSeries( this.__hooks[ event.type ][ event.name ], iteratee, done );
+		var args = _.toArray( arguments );
+		if( _.isString( context ) ){
+			args.unshift( null );
+		}
+		var event = parseTypedEvent( args[ 1 ] );
+		async.eachSeries( this.__hooks[ event.type ][ event.name ], args[ 2 ].bind( args[ 0 ] ), args[ 3 ] );
+		return this;
 	},
 
 	/**
 	 * Calls all hooks subscribed to the `typedEvent` and passes remaining parameters to them
+	 * @param {*} [context] - the context in which the hooks will be called
 	 * @param {String} typedEvent - namespaced event, e.g. `pre:save`
 	 * @param {...*} [parameters] - any parameters you wish to pass to the hooks.
+	 * @param {Function} [callback] - will be called when all hooks have finished
 	 */
-	emit : function( typedEvent,
+	emit : function( context,
+					 typedEvent,
 					 parameters ){
-		var args = _.toArray( arguments );
-		args.shift();
-		args.push( null );
-		var n = args.length - 1;
+		var args = _.toArray( arguments ),
+			done;
+		if( _.isString( context ) ){
+			typedEvent = context;
+			context = null;
+		} else {
+			args.shift(); //drop `context`
+		}
+		args.shift();//drop `typedEvent`
+		if( _.isFunction( args[ args.length - 1 ] ) ){
+			done = args.pop(); //drop callback
+		}
+		args = _.flatten( args );// in case parameters were passed in as an array; this is 2-dim, we need 1-dim
 		this.hooks( typedEvent, function( hook,
 										  next ){
-			args[ n ] = next;
-			hook.apply( null, args );
-		} );
+			di( hook, context, { callbackParamName : "next"} ).provides( args ).call( function(){
+				next();
+			} );
+		}, done );
+		return this;
 	},
 
 	/**
@@ -158,6 +182,7 @@ var methods = {
 				this.__hooks[ event.type ] = {};
 			}
 		}
+		return this;
 	},
 
 	/**
@@ -181,6 +206,7 @@ var methods = {
 				this.emit( "post:" + method );
 			}.bind( this );
 		}, this );
+		return this;
 	}
 };
 

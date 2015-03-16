@@ -11,7 +11,9 @@
     "url": "https://github.com/keystonejs/keystone-hooks"
   },
   "keywords": [
-    "events", "hooks", "keystone"
+    "events",
+    "hooks",
+    "keystone"
   ],
   "author": "Camille Reynders",
   "license": "MIT",
@@ -21,6 +23,7 @@
   "homepage": "https://github.com/keystonejs/keystone-hooks",
   "dependencies": {
     "async": "^0.9.0",
+    "asyncdi": "^1.0.1",
     "lodash": "^3.5.0"
   },
   "devDependencies": {
