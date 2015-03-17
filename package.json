@@ -1,5 +1,5 @@
 {
-  "name": "keystone-hooks",
+  "name": "grappling-hook",
   "version": "1.0.0",
   "description": "Pre/Post hooking mechanism",
   "main": "index.js",
@@ -9,11 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/keystonejs/keystone-hooks"
+    "url": "https://github.com/keystonejs/grappling-hook"
   },
   "keywords": [
     "events",
     "hooks",
+    "async",
     "keystone"
   ],
   "author": "Camille Reynders",
