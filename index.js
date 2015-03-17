@@ -5,134 +5,247 @@ var _ = require('lodash'),
 	async = require('async');
 
 function init(opts) {
-	this.__hooks = {
-		pre      : {},
-		post     : {},
-		originals: {},
-		opts     : opts || {}
+	this.__grappling = {
+		middleware: {},
+		hooks     : [],
+		opts      : _.defaults({}, opts, {
+			strict: true
+		})
 	};
 }
 
-function addHook(context, eventType, args) {
-	var eventName = args.shift(),
-		fn = _.flatten(args);
-	if (!context.__hooks[eventType][eventName] && context.__hooks.opts.strict) {
-		throw new Error('Hooks for ' + eventName + ' are not supported.');
-	}
-	var handlers = context.__hooks[eventType];
-	handlers[eventName] = handlers[eventName].concat(fn);
-}
-
-function parseTypedEvent(typedEvent) {
-	var temp = typedEvent.split(':');
+function parseHook(hook) {
+	var parsed = (hook) ? hook.split(':') : [],
+		n = parsed.length;
 	return {
-		type: temp[0],
-		name: temp[1]
+		type: parsed[n - 2],
+		name: parsed[n - 1]
 	};
 }
+
+/**
+ * Applies `iteratee` to all subscribed hooks.
+ * @param {*} [context] - the context in which `iteratee` will be called
+ * @param {String} hook - (qualified) hook, e.g. 'pre:save' or 'save'
+ * @param {Function} iteratee - the function the middleware is passed to
+ * @param {Function} [done] - will be called when all hooks have been called
+ * @api private
+ */
+function iterateMiddleware(instance) {
+	var args = _.toArray(arguments);
+	args.shift(); // drop `instance`
+	if (_.isString(args[0])) {
+		args.unshift(null);
+	}
+	async.eachSeries(instance.getHooks(args[1]), args[2].bind(args[0]), args[3]);
+	return this;
+}
+
+/**
+ *
+ * @param instance grappling-hook instance
+ * @param hookType qualifier
+ * @param hookName action
+ * @param args
+ * @api private
+ */
+function addMiddleware(instance, hookType, hookName, args) {
+	var fn = _.flatten(args),
+		cache = instance.__grappling;
+	if (cache.opts.strict && cache.hooks.indexOf(hookType + ':' + hookName) < 0) {
+		throw new Error('Hooks for ' + hookType + ':' + hookName + ' are not supported.');
+	}
+	var mw = cache.middleware[hookName] || {};
+	mw[hookType] = (mw[hookType] || []).concat(fn);
+	cache.middleware[hookName] = mw;
+}
+
+/**
+ *
+ * @param hookObj
+ * @returns {*}
+ * @api private
+ */
+function qualifyHook(hookObj) {
+	if (!hookObj.name || !hookObj.type) {
+		throw new Error('Only qualified hooks are allowed, e.g. "pre:save", not "save"');
+	}
+	return hookObj;
+}
+
+function createHooks(instance, config) {
+	var registered = instance.__grappling.hooks;
+	_.each(config, function(fn, hook) {
+		var hookObj = parseHook(hook);
+		instance[hookObj.name] = function() {
+			if(registered.indexOf('pre:' + hookObj.name) > -1){
+				instance.callHooks('pre:' + hookObj.name);
+			}
+			fn.apply(instance, _.toArray(arguments));
+			if(registered.indexOf('post:' + hookObj.name) > -1){
+				instance.callHooks('post:' + hookObj.name);
+			}
+		};
+	});
+}
+
 var methods = {
 	/**
-	 * Sets up a pre-hook.
+	 * Adds middleware to a pre-hook
 	 *
-	 * @param {String} event
-	 * @param {(...Function|Function[])} fn - function(s) to call
+	 * @param {String} action
+	 * @param {(...Function|Function[])} fn - middleware to call
 	 * @api public
 	 */
 	pre: function() {
-		addHook(this, 'pre', _.toArray(arguments));
+		var args = _.toArray(arguments);
+		addMiddleware(this, 'pre', args.shift(), args);
 		return this;
 	},
 
 	/**
-	 * Sets up a post-hook.
+	 * Adds middleware to a post-hook
 	 *
-	 * @param {String} event
-	 * @param {(...Function|Function[])} fn - function(s) to call
+	 * @param {String} action
+	 * @param {(...Function|Function[])} fn - middleware to call
 	 * @api public
 	 */
 	post: function() {
-		addHook(this, 'post', _.toArray(arguments));
+		var args = _.toArray(arguments);
+		addMiddleware(this, 'post', args.shift(), args);
 		return this;
 	},
 
 	/**
-	 * Sets up a hook.
+	 * Adds middleware to a hook
 	 *
-	 * @param {String} typedEvent namespaced event, e.g. `pre:save`
-	 * @param {(...Function|Function[])} fn - function(s) to call
+	 * @param {String} hook - qualified hook e.g. `pre:save`
+	 * @param {(...Function|Function[])} fn - middleware to call
 	 * @api public
 	 */
-	hookup: function(typedEvent) {
-		var event = parseTypedEvent(typedEvent),
-			args = _.toArray(arguments);
-		args[0] = event.name;
-		this[event.type].apply(this, args);
+	hook: function() {
+		var args = _.toArray(arguments),
+			hook = qualifyHook(parseHook(args[0]));
+		args[0] = hook.name;
+		this[hook.type].apply(this, args);
 		return this;
 	},
 
 	/**
-	 * Registers a hookable type
-	 * @param {(...string|string[])} types - namespaced event(s), e.g. `pre:save`
-	 * or simply passing `save` will register both `pre:save` and `post:save`
+	 * Removes (a) hook(s) for `hook`
+	 * @example
+	 * //removes `onFieldSave` as a `pre:save` middleware
+	 * field.unhook( 'pre:save', onFieldSave );
+	 * @example
+	 * //removes all middleware for `pre:save`
+	 * field.unhook('pre:save');
+	 * @example
+	 * //removes all middleware for `pre:save` and `post:save`
+	 * field.unhook('save');
+	 * @example
+	 * //removes ALL middleware
+	 * field.unhook();
+	 * @param {String} [hook] - (qualified) hooks e.g. `pre:save` or `save`
+	 * @param {(...Function|Function[])} [fn] - function(s) to be removed
 	 */
-	hookable: function() {
-		var args = _.flatten(_.toArray(arguments));
-		_.each(args, function(typedEvent) {
-			var event = parseTypedEvent(typedEvent);
-			if (!this.__hooks[event.type]) {
-				if (event.name) {
-					throw new Error('Only "pre" and "post" types are allowed, not "' + event.type + '"');
-				} else {
-					this.__hooks.pre[event.type] = [];
-					this.__hooks.post[event.type] = [];
-				}
+	unhook: function() {
+		var fns = _.toArray(arguments),
+			hook = parseHook(fns.shift()),
+			cache = this.__grappling.middleware[hook.name];
+
+		if (fns.length) {
+			qualifyHook(hook);
+		}
+		if (cache) {
+			if (hook.type) {
+				cache[hook.type] = (fns.length) ? _.without.apply(null, [cache[hook.type]].concat(fns)) : [];
 			} else {
-				this.__hooks[event.type][event.name] = [];
+				this.__grappling.middleware[hook.name] = {pre: [], post: []};
 			}
+		}else if(!hook.name){
+			this.__grappling.middleware = {};
+		}
+		return this;
+	},
+
+	/**
+	 * Explicitly declare hooks
+	 * @param {(...string|string[])} hooks - (qualified) hooks e.g. `pre:save` or `save`
+	 */
+	allowHooks: function() {
+		var args = _.flatten(_.toArray(arguments));
+		_.each(args, function(hook) {
+			var hookObj = parseHook(hook),
+				hooks;
+			if (hookObj.type) {
+				if (hookObj.type !== 'pre' && hookObj.type !== 'post') {
+					throw new Error('Only "pre" and "post" types are allowed, not "' + hookObj.type + '"');
+				}
+				hooks = [hook];
+			} else {
+				hooks = ['pre:' + hookObj.name, 'post:' + hookObj.name];
+			}
+			this.__grappling.hooks = this.__grappling.hooks.concat(hooks);
 		}, this);
 		return this;
 	},
 
 	/**
-	 * Applies `iteratee` to all subscribed hooks.
-	 * @param {*} [context] - the context in which `iteratee` will be called
-	 * @param {String} typedEvent - namespaced event, e.g. `pre:save`
-	 * @param {Function} iteratee - the function to apply to the hooks
-	 * @param {Function} [done] - will be called when all hooks have been called
+	 * Wraps methods/functions with `pre` and/or `post` hooks
+	 * @example
+	 * //wrap existing methods
+	 * instance.addHooks('save', 'pre:remove');
+	 * @example
+	 * //add method and wrap it
+	 * instance.addHooks({
+	 *   save: instance._upload,
+	 *   "pre:remove": function(){
+	 *   	//...
+	 *   }
+	 * });
+	 * @param {(...String|String[]|...Object|Object[])} method - method(s) that need(s) to emit `pre` and `post` events
 	 */
-	hooks: function() {
-		var args = _.toArray(arguments);
-		if (_.isString(args[0])) {
-			args.unshift(null);
-		}
-		var event = parseTypedEvent(args[1]);
-		async.eachSeries(this.__hooks[event.type][event.name], args[2].bind(args[0]), args[3]);
+	addHooks: function() {
+		var args = _.flatten(_.toArray(arguments)),
+			config = {};
+		_.each(args, function(mixed) {
+			if (_.isString(mixed)) {
+				var hookObj = parseHook(mixed),
+					fn = this[hookObj.name];
+				if (!fn) throw new Error('todo'); //non-existing method
+				config[mixed] = fn;
+			} else if (_.isObject(mixed)) {
+				_.defaults(config, mixed);
+			}// todo: else throw?
+		}, this);
+		this.allowHooks(_.keys(config));
+		createHooks(this, config);
 		return this;
 	},
 
 	/**
-	 * Calls all hooks subscribed to the `typedEvent` and passes remaining parameters to them
+	 * Calls all hooks subscribed to the `hook` and passes remaining parameters to them
 	 * @param {*} [context] - the context in which the hooks will be called
-	 * @param {String} typedEvent - namespaced event, e.g. `pre:save`
+	 * @param {String} hook - qualified hook e.g. `pre:save`
 	 * @param {...*} [parameters] - any parameters you wish to pass to the hooks.
 	 * @param {Function} [callback] - will be called when all hooks have finished
 	 */
-	emit: function(context, typedEvent) {
+	callHooks: function(context, hook) {
 		var args = _.toArray(arguments),
 			done;
 		if (_.isString(context)) {
-			typedEvent = context;
+			hook = context;
 			context = null;
 		} else {
 			args.shift(); //drop `context`
 		}
-		args.shift();//drop `typedEvent`
+		args.shift();//drop `hook`
 		if (_.isFunction(args[args.length - 1])) {
 			done = args.pop(); //drop callback
 		}
 		args = _.flatten(args);// in case parameters were passed in as an array; this is 2-dim, we need 1-dim
-		this.hooks(typedEvent, function(hook, next) {
-			di(hook, context, {callbackParamName: 'next'}).provides(args).call(function() {
+		iterateMiddleware(this, hook, function(callback, next) {
+			di(callback, context, {callback: ['next', 'callback']}).provides(args).call(function() {
 				next();
 			});
 		}, done);
@@ -140,61 +253,22 @@ var methods = {
 	},
 
 	/**
-	 * Removes (a) hook(s) for `typedEvent`
-	 * @example
-	 * //removes `onFieldSave` as a `pre:save` hook
-	 * field.unhook( 'pre:save', onFieldSave );
-	 * @example
-	 * //removes ALL hooks for `pre:save`
-	 * field.unhook('pre:save');
-	 * @example
-	 * //removes ALL `pre` hooks
-	 * field.unhook('pre');
-	 * @example
-	 * //removes ALL hooks, i.e. `pre` AND `post`
-	 * field.unhook();
-	 * @param {String} [typedEvent] - namespaced event, e.g. `pre:save`
-	 * @param {(...Function|Function[])} [fn] - function(s) to be removed
+	 *
+	 * @param hook - qualified hook, e.g. `pre:save`
+	 * @returns {Function[]}
 	 */
-	unhook: function() {
-		var methods = _.toArray(arguments);
-		var event = parseTypedEvent(methods.shift());
-		if (methods.length) {
-			_.remove(this.__hooks[event.type][event.name], function(hook) {
-				return methods.indexOf(hook) > -1;
-			}, this);
-		} else {
-			if (event.name) {
-				delete this.__hooks[event.type][event.name];
-			} else {
-				this.__hooks[event.type] = {};
-			}
-		}
-		return this;
+	getHooks: function(hook) {
+		var hookObj = qualifyHook(parseHook(hook));
+		return (this.__grappling.middleware[hookObj.name] || {})[hookObj.type] || [];
 	},
 
 	/**
-	 * Wraps `method` with `pre` and `post` emission
-	 * @example
-	 * field.hooked('save');
-	 * field.pre('save', function(){
-	 *   console.log('pre:save called');
-	 * });
-	 * field.save();
-	 * @param {(...String|String[])} method - method(s) that need(s) to emit `pre` and `post` events
+	 *
+	 * @param hook - qualified hook, e.g. `pre:save`
+	 * @returns {boolean}
 	 */
-	hooked: function() {
-		var methods = _.flatten(_.toArray(arguments));
-		_.each(methods, function(method) {
-			this.hookable(method);
-			this.__hooks.originals[method] = this[method];
-			this[method] = function() {
-				this.emit('pre:' + method);
-				this.__hooks.originals[method].apply(this, _.toArray(arguments));
-				this.emit('post:' + method);
-			}.bind(this);
-		}, this);
-		return this;
+	hasHooks: function(hook) {
+		return this.getHooks(hook).length > 0;
 	}
 };
 
@@ -202,6 +276,10 @@ function mixin(instance, opts) {
 	init.call(instance, opts);
 	_.extend(instance, methods);
 	return instance;
+}
+
+function attach(clazz, opts) {
+	return mixin(clazz.prototype, opts);
 }
 
 /**
@@ -216,5 +294,6 @@ function create(opts) {
 
 module.exports = {
 	mixin : mixin,
-	create: create
+	create: create,
+	attach: attach
 };

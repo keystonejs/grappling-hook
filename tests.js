@@ -6,11 +6,11 @@ var expect = require('must');
 var subject = require('./index');
 var sinon = require('sinon');
 
-var MEMBERS = ['pre', 'post', 'hookup', 'hooks', 'hookable', 'unhook', 'emit', 'hooked', '__hooks'];
+var MEMBERS = ['pre', 'post', 'hook', 'unhook', 'allowHooks', 'addHooks', 'callHooks', 'getHooks', 'hasHooks', '__grappling'];
 var PRE_TEST = 'pre:test';
 var POST_TEST = 'post:test';
 
-describe('-- prepost --', function() {
+describe('-- grappling-hook --', function() {
 	describe('spec file', function() {
 		it('should be found', function() {
 			expect(true).to.be.true();
@@ -23,113 +23,148 @@ describe('-- prepost --', function() {
 		it('should expose a `create` function', function() {
 			expect(subject.create).to.be.a.function();
 		});
+		it('should expose an `attach` function', function() {
+			expect(subject.attach).to.be.a.function();
+		});
 	});
 	describe('#mixin', function() {
-		it('should add prepost functions to an existing object', function() {
+		it('should add grappling-hook functions to an existing object', function() {
 			var instance = {};
 			subject.mixin(instance);
 			expect(instance).to.have.keys(MEMBERS);
 		});
 	});
 	describe('#create', function() {
-		it('should return a prepost object', function() {
+		it('should return a grappling-hook object', function() {
 			var instance = subject.create();
 			expect(instance).to.have.keys(MEMBERS);
 		});
+	});
+	describe('#attach', function() {
+		//todo: make sure this _really_ works as intended
 	});
 	describe('instance', function() {
 		var instance;
 		beforeEach(function() {
 			instance = subject.create();
 		});
-		describe('#hookable', function() {
+		describe('#allowHooks', function() {
 			var hook;
 			beforeEach(function() {
 				hook = sinon.spy();
 			});
 			it('should throw an error for anything else but `pre` or `post`', function() {
 				expect(function() {
-					instance.hookable('nope:not valid!');
+					instance.allowHooks('nope:not valid!');
 				}).to.throw(/pre|post/);
 			});
-			it('should register a type:event hook', function() {
-				instance.hookable(PRE_TEST)
-					.hookup(PRE_TEST, hook)
-					.emit(PRE_TEST);
+			it('should register a qualified hook', function() {
+				instance.allowHooks(PRE_TEST);
+				instance.hook(PRE_TEST, hook)
+					.callHooks(PRE_TEST);
 				expect(hook.callCount).to.equal(1);
 			});
-			it('should accept multiple type:event hooks', function() {
-				instance.hookable(POST_TEST, PRE_TEST)
-					.hookup(PRE_TEST, hook)
-					.emit(PRE_TEST);
+			it('should accept multiple qualified hooks', function() {
+				instance.allowHooks(POST_TEST, PRE_TEST)
+					.hook(PRE_TEST, hook)
+					.callHooks(PRE_TEST);
 				expect(hook.callCount).to.equal(1);
 			});
-			it('should accept an array of type:event hooks', function() {
-				instance.hookable([POST_TEST, PRE_TEST])
-					.hookup(PRE_TEST, hook)
-					.emit(PRE_TEST);
+			it('should accept an array of qualified hooks', function() {
+				instance.allowHooks([POST_TEST, PRE_TEST])
+					.hook(PRE_TEST, hook)
+					.callHooks(PRE_TEST);
 				expect(hook.callCount).to.equal(1);
 			});
-			it('should accept an non-typed string and register both hooks', function() {
-				instance.hookable('test')
-					.hookup(PRE_TEST, hook)
-					.hookup(POST_TEST, hook)
-					.emit(PRE_TEST)
-					.emit(POST_TEST);
+			it('should accept an action and register both hooks', function() {
+				instance.allowHooks('test')
+					.hook(PRE_TEST, hook)
+					.hook(POST_TEST, hook)
+					.callHooks(PRE_TEST)
+					.callHooks(POST_TEST);
 				expect(hook.callCount).to.equal(2);
 			});
 		});
-		describe('#hookup', function() {
-			var hook;
+		describe('#hook', function() {
+			var callback;
 			beforeEach(function() {
-				hook = sinon.spy();
-				instance.hookable('test');
+				callback = sinon.spy();
+				instance.allowHooks('test');
 			});
-			it('should register a hook to a single event', function() {
-				instance.hookup(PRE_TEST, hook)
-					.emit(PRE_TEST)
-					.emit(POST_TEST);
-				expect(hook.callCount).to.equal(1);
+			it('should throw an error for unqualified hooks', function() {
+				expect(function() {
+					instance.hook('test');
+				}).to.throw(/qualified/);
 			});
-			it('should register multiple hooks', function() {
-				instance.hookup(PRE_TEST, hook, hook, hook)
-					.emit(PRE_TEST);
-				expect(hook.callCount).to.equal(3);
+			it('should throw an error for a non-existing hook', function() {
+				expect(function() {
+					instance.hook('pre:notAllowed');
+				}).to.throw(/not supported/);
 			});
-			it('should register an array of hooks to a single event', function() {
-				var hooks = [hook, hook, hook];
-				instance.hookup(PRE_TEST, hooks)
-					.emit(PRE_TEST);
-				expect(hook.callCount).to.equal(hooks.length);
+			it('should register a single callback', function() {
+				instance.hook(PRE_TEST, callback)
+					.callHooks(PRE_TEST)
+					.callHooks(POST_TEST);
+				expect(callback.callCount).to.equal(1);
+			});
+			it('should register multiple callbacks', function() {
+				instance.hook(PRE_TEST, callback, callback, callback)
+					.callHooks(PRE_TEST);
+				expect(callback.callCount).to.equal(3);
+			});
+			it('should register an array of callbacks', function() {
+				var hooks = [callback, callback, callback];
+				instance.hook(PRE_TEST, hooks)
+					.callHooks(PRE_TEST);
+				expect(callback.callCount).to.equal(hooks.length);
 			});
 		});
-		describe('#hooks', function() {
-			var hook;
+		describe('#getHooks', function() {
+			var callback;
 			beforeEach(function() {
-				hook = sinon.spy();
-				instance.hookable('test');
+				callback = function() {
+				};
+				instance.allowHooks(PRE_TEST);
 			});
-			it('should iterate over all hooks and pass them to `iteratee`', function(done) {
-				instance.hookup(PRE_TEST, hook, hook, hook);
-				var stub = sinon.stub();
-				stub.callsArgAsync(1); // calls `next`
-				instance.hooks(PRE_TEST, stub, function() {
-					expect(stub.callCount).to.equal(3);
-					expect(stub.alwaysCalledWith(hook)); //`hook` is first argument
-					done();
-				});
+			it('should throw an error for an unqualified hook', function() {
+				expect(function() {
+					instance.getHooks('test');
+				}).to.throw(/qualified/);
 			});
-			it('should execute `iteratee` in scope `context`', function() {
-				instance.hookup(PRE_TEST, hook);
-				var context = {};
-				instance.hooks(context, PRE_TEST, function(hook, next) {
-					expect(this).to.equal(context);
-					next();
-				});
+			it('should return empty array if no callbacks are registered for the hook', function() {
+				var actual = instance.getHooks(PRE_TEST);
+				expect(actual).to.eql([]);
+			});
+			it('should retrieve all callbacks for a hook', function() {
+				var actual = instance.hook(PRE_TEST, callback)
+					.getHooks(PRE_TEST);
+				expect(actual).to.eql([callback]);
 			});
 		});
-		describe('#emit', function() {
-			var hook,
+		describe('#hasHooks', function() {
+			var callback;
+			beforeEach(function() {
+				callback = function() {
+				};
+				instance.allowHooks(PRE_TEST);
+			});
+			it('should throw an error for an unqualified hook', function() {
+				expect(function() {
+					instance.hasHooks('test');
+				}).to.throw(/qualified/);
+			});
+			it('should return `false` if no callbacks are registered for the hook', function() {
+				var actual = instance.hasHooks(PRE_TEST);
+				expect(actual).to.be.false();
+			});
+			it('should return `true` if callbacks are registered for the hook', function() {
+				var actual = instance.hook(PRE_TEST, callback)
+					.hasHooks(PRE_TEST);
+				expect(actual).to.be.true();
+			});
+		});
+		describe('#callHooks', function() {
+			var callback,
 				passed,
 				foo = {},
 				bar = {};
@@ -139,9 +174,9 @@ describe('-- prepost --', function() {
 					args : undefined,
 					async: false
 				};
-				hook = function(foo,
-								bar,
-								next) {
+				callback = function(foo,
+									bar,
+									next) {
 					passed.args = [foo, bar];
 					passed.scope = this;
 					setTimeout(function() {
@@ -149,28 +184,70 @@ describe('-- prepost --', function() {
 						next();
 					}, 0);
 				};
-				instance.hookable('test');
-				instance.hookup(PRE_TEST, hook);
+				instance.allowHooks('test')
+					.hook(PRE_TEST, callback);
 			});
-			it('should pass `...parameters` to hooks', function() {
-				instance.emit(PRE_TEST, foo, bar);
+			it('should throw an error for an unqualified hook', function() {
+				expect(function() {
+					instance.callHooks('test');
+				}).to.throw(/qualified/);
+			});
+			it('should pass `...parameters` to callbacks', function() {
+				instance.callHooks(PRE_TEST, foo, bar);
 				expect(passed.args).to.eql([foo, bar]);
 			});
-			it('should pass `parameters[]` to hooks', function() {
-				instance.emit(PRE_TEST, [foo, bar]);
+			it('should pass `parameters[]` to callbacks', function() {
+				instance.callHooks(PRE_TEST, [foo, bar]);
 				expect(passed.args).to.eql([foo, bar]);
 			});
-			it('execute hooks in scope `context`', function() {
-				instance.hookup(PRE_TEST, hook);
+			it('execute callbacks in scope `context`', function() {
+				instance.hook(PRE_TEST, callback);
 				var context = {};
-				instance.emit(context, PRE_TEST, [foo, bar]);
+				instance.callHooks(context, PRE_TEST, [foo, bar]);
 				expect(passed.scope).to.equal(context);
 			});
-			it('should call `callback` when all hooks have been called', function(done) {
-				instance.emit(PRE_TEST, [foo, bar], function() {
+			it('should call `callback` when all callbacks have been called', function(done) {
+				instance.callHooks(PRE_TEST, [foo, bar], function() {
 					expect(passed.async).to.be.true();
 					done();
 				});
+			});
+		});
+		describe('#unhook', function() {
+			var c1, c2;
+			beforeEach(function() {
+				instance.allowHooks('test');
+				c1 = function() {
+				};
+				c2 = function() {
+				};
+			});
+			it('should remove specific callbacks for a qualified hook', function() {
+				instance.hook(PRE_TEST, c1, c2)
+					.unhook(PRE_TEST, c1);
+				var actual = instance.getHooks(PRE_TEST);
+				expect(actual).to.eql([c2]);
+			});
+			it('should remove all callbacks for a qualified hook', function() {
+				instance.hook(PRE_TEST, c1, c2)
+					.unhook(PRE_TEST);
+				var actual = instance.getHooks(PRE_TEST);
+				expect(actual).to.eql([]);
+			});
+			it('should remove all callbacks ', function() {
+				instance
+					.hook(PRE_TEST, c1, c2)
+					.hook(POST_TEST, c1, c2)
+					.unhook()
+				;
+				expect(instance.getHooks(PRE_TEST)).to.eql([]);
+				expect(instance.getHooks(POST_TEST)).to.eql([]);
+			});
+			it('should throw an error if callbacks are provided for an unqualified hook', function() {
+				instance.hook(PRE_TEST, c1, c2);
+				expect(function() {
+					instance.unhook('test', c1);
+				}).to.throw(/qualified/);
 			});
 		});
 	});
