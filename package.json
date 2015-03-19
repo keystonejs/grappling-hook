@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha tests.js",
-    "style": "eslint ./; true",
+    "style": "eslint index.js tests.js; true",
     "coverage": "istanbul cover _mocha tests.js"
   },
   "repository": {
