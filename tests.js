@@ -6,7 +6,7 @@ var expect = require('must');
 var subject = require('./index');
 var sinon = require('sinon');
 
-var MEMBERS = ['pre', 'post', 'hook', 'unhook', 'allowHooks', 'addHooks', 'callHooks', 'getHooks', 'hasHooks', '__grappling'];
+var MEMBERS = ['pre', 'post', 'hook', 'unhook', 'allowHooks', 'addHooks', 'callHook', 'getMiddleware', 'hasMiddleware', '__grappling'];
 var PRE_TEST = 'pre:test';
 var POST_TEST = 'post:test';
 
@@ -61,27 +61,27 @@ describe('-- grappling-hook --', function() {
 			it('should register a qualified hook', function() {
 				instance.allowHooks(PRE_TEST);
 				instance.hook(PRE_TEST, hook)
-					.callHooks(PRE_TEST);
+					.callHook(PRE_TEST);
 				expect(hook.callCount).to.equal(1);
 			});
 			it('should accept multiple qualified hooks', function() {
 				instance.allowHooks(POST_TEST, PRE_TEST)
 					.hook(PRE_TEST, hook)
-					.callHooks(PRE_TEST);
+					.callHook(PRE_TEST);
 				expect(hook.callCount).to.equal(1);
 			});
 			it('should accept an array of qualified hooks', function() {
 				instance.allowHooks([POST_TEST, PRE_TEST])
 					.hook(PRE_TEST, hook)
-					.callHooks(PRE_TEST);
+					.callHook(PRE_TEST);
 				expect(hook.callCount).to.equal(1);
 			});
 			it('should accept an action and register both hooks', function() {
 				instance.allowHooks('test')
 					.hook(PRE_TEST, hook)
 					.hook(POST_TEST, hook)
-					.callHooks(PRE_TEST)
-					.callHooks(POST_TEST);
+					.callHook(PRE_TEST)
+					.callHook(POST_TEST);
 				expect(hook.callCount).to.equal(2);
 			});
 		});
@@ -103,23 +103,23 @@ describe('-- grappling-hook --', function() {
 			});
 			it('should register a single callback', function() {
 				instance.hook(PRE_TEST, callback)
-					.callHooks(PRE_TEST)
-					.callHooks(POST_TEST);
+					.callHook(PRE_TEST)
+					.callHook(POST_TEST);
 				expect(callback.callCount).to.equal(1);
 			});
 			it('should register multiple callbacks', function() {
 				instance.hook(PRE_TEST, callback, callback, callback)
-					.callHooks(PRE_TEST);
+					.callHook(PRE_TEST);
 				expect(callback.callCount).to.equal(3);
 			});
 			it('should register an array of callbacks', function() {
 				var hooks = [callback, callback, callback];
 				instance.hook(PRE_TEST, hooks)
-					.callHooks(PRE_TEST);
+					.callHook(PRE_TEST);
 				expect(callback.callCount).to.equal(hooks.length);
 			});
 		});
-		describe('#getHooks', function() {
+		describe('#getMiddleware', function() {
 			var callback;
 			beforeEach(function() {
 				callback = function() {
@@ -128,20 +128,20 @@ describe('-- grappling-hook --', function() {
 			});
 			it('should throw an error for an unqualified hook', function() {
 				expect(function() {
-					instance.getHooks('test');
+					instance.getMiddleware('test');
 				}).to.throw(/qualified/);
 			});
 			it('should return empty array if no callbacks are registered for the hook', function() {
-				var actual = instance.getHooks(PRE_TEST);
+				var actual = instance.getMiddleware(PRE_TEST);
 				expect(actual).to.eql([]);
 			});
 			it('should retrieve all callbacks for a hook', function() {
 				var actual = instance.hook(PRE_TEST, callback)
-					.getHooks(PRE_TEST);
+					.getMiddleware(PRE_TEST);
 				expect(actual).to.eql([callback]);
 			});
 		});
-		describe('#hasHooks', function() {
+		describe('#hasMiddleware', function() {
 			var callback;
 			beforeEach(function() {
 				callback = function() {
@@ -150,20 +150,20 @@ describe('-- grappling-hook --', function() {
 			});
 			it('should throw an error for an unqualified hook', function() {
 				expect(function() {
-					instance.hasHooks('test');
+					instance.hasMiddleware('test');
 				}).to.throw(/qualified/);
 			});
 			it('should return `false` if no callbacks are registered for the hook', function() {
-				var actual = instance.hasHooks(PRE_TEST);
+				var actual = instance.hasMiddleware(PRE_TEST);
 				expect(actual).to.be.false();
 			});
 			it('should return `true` if callbacks are registered for the hook', function() {
 				var actual = instance.hook(PRE_TEST, callback)
-					.hasHooks(PRE_TEST);
+					.hasMiddleware(PRE_TEST);
 				expect(actual).to.be.true();
 			});
 		});
-		describe('#callHooks', function() {
+		describe('#callHook', function() {
 			var callback,
 				passed,
 				foo = {},
@@ -189,25 +189,25 @@ describe('-- grappling-hook --', function() {
 			});
 			it('should throw an error for an unqualified hook', function() {
 				expect(function() {
-					instance.callHooks('test');
+					instance.callHook('test');
 				}).to.throw(/qualified/);
 			});
 			it('should pass `...parameters` to callbacks', function() {
-				instance.callHooks(PRE_TEST, foo, bar);
+				instance.callHook(PRE_TEST, foo, bar);
 				expect(passed.args).to.eql([foo, bar]);
 			});
 			it('should pass `parameters[]` to callbacks', function() {
-				instance.callHooks(PRE_TEST, [foo, bar]);
+				instance.callHook(PRE_TEST, [foo, bar]);
 				expect(passed.args).to.eql([foo, bar]);
 			});
 			it('execute callbacks in scope `context`', function() {
 				instance.hook(PRE_TEST, callback);
 				var context = {};
-				instance.callHooks(context, PRE_TEST, [foo, bar]);
+				instance.callHook(context, PRE_TEST, [foo, bar]);
 				expect(passed.scope).to.equal(context);
 			});
 			it('should call `callback` when all callbacks have been called', function(done) {
-				instance.callHooks(PRE_TEST, [foo, bar], function() {
+				instance.callHook(PRE_TEST, [foo, bar], function() {
 					expect(passed.async).to.be.true();
 					done();
 				});
@@ -225,13 +225,13 @@ describe('-- grappling-hook --', function() {
 			it('should remove specific callbacks for a qualified hook', function() {
 				instance.hook(PRE_TEST, c1, c2)
 					.unhook(PRE_TEST, c1);
-				var actual = instance.getHooks(PRE_TEST);
+				var actual = instance.getMiddleware(PRE_TEST);
 				expect(actual).to.eql([c2]);
 			});
 			it('should remove all callbacks for a qualified hook', function() {
 				instance.hook(PRE_TEST, c1, c2)
 					.unhook(PRE_TEST);
-				var actual = instance.getHooks(PRE_TEST);
+				var actual = instance.getMiddleware(PRE_TEST);
 				expect(actual).to.eql([]);
 			});
 			it('should remove all callbacks ', function() {
@@ -240,8 +240,8 @@ describe('-- grappling-hook --', function() {
 					.hook(POST_TEST, c1, c2)
 					.unhook()
 				;
-				expect(instance.getHooks(PRE_TEST)).to.eql([]);
-				expect(instance.getHooks(POST_TEST)).to.eql([]);
+				expect(instance.getMiddleware(PRE_TEST)).to.eql([]);
+				expect(instance.getMiddleware(POST_TEST)).to.eql([]);
 			});
 			it('should throw an error if callbacks are provided for an unqualified hook', function() {
 				instance.hook(PRE_TEST, c1, c2);

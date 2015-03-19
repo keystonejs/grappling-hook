@@ -37,7 +37,7 @@ function iterateMiddleware(instance) {
 	if (_.isString(args[0])) {
 		args.unshift(null);
 	}
-	async.eachSeries(instance.getHooks(args[1]), args[2].bind(args[0]), args[3]);
+	async.eachSeries(instance.getMiddleware(args[1]), args[2].bind(args[0]), args[3]);
 	return this;
 }
 
@@ -79,11 +79,11 @@ function createHooks(instance, config) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
 			if(registered.indexOf('pre:' + hookObj.name) > -1){
-				instance.callHooks('pre:' + hookObj.name);
+				instance.callHook('pre:' + hookObj.name);
 			}
 			fn.apply(instance, _.toArray(arguments));
 			if(registered.indexOf('post:' + hookObj.name) > -1){
-				instance.callHooks('post:' + hookObj.name);
+				instance.callHook('post:' + hookObj.name);
 			}
 		};
 	});
@@ -230,7 +230,7 @@ var methods = {
 	 * @param {...*} [parameters] - any parameters you wish to pass to the hooks.
 	 * @param {Function} [callback] - will be called when all hooks have finished
 	 */
-	callHooks: function(context, hook) {
+	callHook: function(context, hook) {
 		var args = _.toArray(arguments),
 			done;
 		if (_.isString(context)) {
@@ -257,7 +257,7 @@ var methods = {
 	 * @param hook - qualified hook, e.g. `pre:save`
 	 * @returns {Function[]}
 	 */
-	getHooks: function(hook) {
+	getMiddleware: function(hook) {
 		var hookObj = qualifyHook(parseHook(hook));
 		return (this.__grappling.middleware[hookObj.name] || {})[hookObj.type] || [];
 	},
@@ -267,8 +267,8 @@ var methods = {
 	 * @param hook - qualified hook, e.g. `pre:save`
 	 * @returns {boolean}
 	 */
-	hasHooks: function(hook) {
-		return this.getHooks(hook).length > 0;
+	hasMiddleware: function(hook) {
+		return this.getMiddleware(hook).length > 0;
 	}
 };
 
