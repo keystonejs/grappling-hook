@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha tests.js",
-    "style": "eslint ./; true"
+    "style": "eslint ./; true",
+    "coverage": "istanbul cover _mocha tests.js"
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,7 @@
   "devDependencies": {
     "babel-eslint": "^2.0.2",
     "eslint": "^0.17.0",
+    "istanbul": "^0.3.8",
     "mocha": "^2.2.1",
     "must": "^0.12.0",
     "sinon": "^1.14.0"
