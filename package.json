@@ -6,7 +6,8 @@
   "scripts": {
     "test": "mocha tests.js",
     "style": "eslint index.js tests.js; true",
-    "coverage": "istanbul cover _mocha tests.js"
+    "test-cov": "istanbul cover _mocha tests.js",
+    "travis": "npm test; npm run style"
   },
   "repository": {
     "type": "git",
