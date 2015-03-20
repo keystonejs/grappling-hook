@@ -168,7 +168,7 @@ instance.callHook('pre:save', "foo", { bar: "bar"});
 ```
 ```sh
 # output:
-saving!
+saving! foo { bar: 'bar' }
 ```
 
 **N.B.**: Only qualified hooks (e.g. "pre:save", NOT "save") are callable, since it doesn't really make sense to call both pre/post hooks consecutively, w/o doing anything in between.
