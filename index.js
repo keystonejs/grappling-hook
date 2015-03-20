@@ -74,10 +74,23 @@ function createHooks(instance, config) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
 			var args = _.toArray(arguments),
-				middleware = instance.getMiddleware('pre:' + hookObj.name);
-			middleware.push(fn);
+				middleware = instance.getMiddleware('pre:' + hookObj.name),
+				needsCallback = _.isFunction(args[args.length-1]),
+				done;
+			if(needsCallback){
+				//callback
+				done = args.shift();
+				middleware.push(function(next){
+					args.push(next);
+					fn.apply(instance, args);
+				});
+			}else{
+				middleware.push(function(){
+					fn.apply(instance, args);
+				});
+			}
 			middleware = middleware.concat(instance.getMiddleware('post:' + hookObj.name));
-			iterateMiddleware(instance, middleware, args);
+			iterateMiddleware(instance, middleware, null, done);
 		};
 	});
 }

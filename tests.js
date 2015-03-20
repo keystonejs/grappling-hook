@@ -355,9 +355,9 @@ describe('-- grappling-hook --', function() {
 				pre = function() {
 					called.push('pre');
 				};
-				original = function(next) {
+				original = function(done) {
 					called.push('original');
-					next();
+					done && done();
 				};
 				post = function() {
 					called.push('post');
@@ -395,6 +395,15 @@ describe('-- grappling-hook --', function() {
 					.method();
 				expect(called).to.eql(['pre', 'original']);
 			});
+			it('should call a callback passed to the method AFTER everything finishes', function(done){
+				instance.addHooks('test')
+					.pre('test', pre)
+					.post('test', post)
+					.test(function(){
+						expect(called).to.eql(['pre', 'original', 'post']);
+						done();
+					});
+			})
 		});
 	});
 	describe('lenient instance', function() {
