@@ -13,7 +13,7 @@ $ npm install grappling-hook
 ## Usage
 
 
-### Creating a `grappling-hook` object
+#### Creating a `grappling-hook` object
 
 You can easily add methods to a new `grappling-hook` instance which are automatically ready for hooking up middleware:
 
@@ -43,7 +43,7 @@ save!
 saved!
 ```
 
-### Using an existing object
+#### Using an existing object
 
 Or you can choose to enable hooking for an already existing object with methods:
 
@@ -75,7 +75,7 @@ save!
 saved!
 ```
 
-### Using a 'class'
+#### Using a 'class'
 
 Or you can patch a `prototype` with `grappling-hook` methods:
 
@@ -112,9 +112,10 @@ All of this is pretty standard stuff, there's two things to note here though:
 1. By default you _have_ to be explicit about which methods you want to make hookable. (There's a more _lenient_ mode as well though)
 1. Middleware doesn't have to accept a `next` callback, i.e. you can use sync functions as middleware too, as in the examples above.
 
-## Sync and async middleware
+### Adding middleware
 
-`grappling-hook` allows you to register both sync and async middleware to a hook. An async middleware function simply declares a `next` parameter last.
+Middleware is added mainly with the `pre` and `post` methods. 
+`grappling-hook` allows you to add both sync and async functions. An async middleware function simply declares a `next` parameter last.
 
 **N.B.**: This parameter _has_ to be called `next` or `callback`, otherwise it won't be recognized as being an async function.
 
@@ -137,7 +138,44 @@ sync
 All middleware is called serially, i.e. execution of the next middleware function will happen _after_ the first middleware has completed its asynchronous operation.
 Parallel and mixed (parallel and serial) execution is on the roadmap and will be added soon!
 
-## Manual calling of hooks
+We've provided another (convenience) method to add middleware too: `hook`. It registers middleware to a qualified hook (e.g. `pre:save`).
+
+```js
+instance.hook('pre:save', function(){
+	console.log("pre");
+})
+instance.save();
+```
+```sh
+# output
+pre
+```
+
+All of the middleware addition methods accept any number of middleware to be added, either as parameters or as an array (or as mix);
+
+```js
+instance.pre('save', fn1, fn2, [fn3, fn4], fn5);
+```
+
+### Removing middleware
+
+You can remove middleware with the `unhook` method.
+
+```js
+//removes `logSave` function for "pre:save"
+instance.unhook("pre:save", logSave);
+
+//remove all middleware for "pre:save"
+instance.unhook("pre:save");
+
+//remove all middleware for "save", i.e. both "pre" and "post"
+instance.unhook("save");
+
+//remove ALL middleware
+instance.unhook();
+```
+
+### Manual calling of hooks
 
 Sometimes its beneficial to be able to call a hook manually, i.e. without adding hooking to a specific method. This allows for more complex and branched flows.
 
@@ -230,5 +268,30 @@ instance.callHook('pre:save', function(){
 # output:
 middleware
 We're finished!
+```
+
+### Middleware introspection
+
+A number of methods are provided which allow you to introspect the added middleware and hooks.
+
+```js
+//returns all middleware functions registered for "pre:save"
+instance.getMiddleware("pre:save");
+
+//returns `true` if any middleware functions are registered for "pre:save"
+instance.hasMiddleware("pre:save");
+
+//return `true` if adding middleware to "pre:save" is allowed (with `allowHooks` or `addHooks`)
+instance.hookable("pre:save");
+```
+
+### Lenient mode
+
+By default `grappling-hook` throws errors if you try to add middleware to or call a non-existing hook. However if you want to allow more leeway (for instance for dynamic delegated hook registration) you can turn on lenient mode:
+
+```js
+var instance = grappling.create({
+	strict: false
+});
 ```
 
