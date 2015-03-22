@@ -268,7 +268,7 @@ describe('-- grappling-hook --', function() {
 				var shouldNotBeCalled = true;
 				instance.hook(POST_TEST, function(next) {
 					next(error);
-				}, function(){
+				}, function() {
 					shouldNotBeCalled = false;
 				}).callHook(POST_TEST, function() {
 					expect(shouldNotBeCalled).to.be.true();
@@ -277,11 +277,11 @@ describe('-- grappling-hook --', function() {
 			});
 			it('should throw middleware errors by default', function() {
 				var error = new Error('middleware error');
-				
+
 				instance.hook(POST_TEST, function(next) {
 					next(error);
 				});
-				expect(function(){
+				expect(function() {
 					instance.callHook(POST_TEST);
 				}).to.throw(error.message);
 			});
@@ -356,50 +356,60 @@ describe('-- grappling-hook --', function() {
 					called.push('pre');
 				};
 				original = function(done) {
-					called.push('original');
-					done && done();
+					setTimeout(function() {
+						called.push('original');
+						done && done();
+					}, 0);
 				};
 				post = function() {
 					called.push('post');
 				};
 				instance.test = original;
 			});
-			it('should add a qualified hook to an existing method', function() {
+			it('should add a qualified hook to an existing method', function(done) {
 				instance.addHooks(PRE_TEST)
-					.hook(PRE_TEST, pre);
-				instance.test();
-				expect(called).to.eql(['pre', 'original']);
+					.hook(PRE_TEST, pre)
+					.test(function() {
+						expect(called).to.eql(['pre', 'original']);
+						done();
+					});
 			});
-			it('should add all qualified hooks to an existing method', function() {
+			it('should add all qualified hooks to an existing method', function(done) {
 				instance.addHooks(PRE_TEST, POST_TEST)
 					.pre('test', pre)
 					.post('test', post)
-					.test();
-				expect(called).to.eql(['pre', 'original', 'post']);
+					.test(function() {
+						expect(called).to.eql(['pre', 'original', 'post']);
+						done();
+					});
 			});
-			it('should add pre and post for unqualified hooks to an existing method', function() {
+			it('should add pre and post for unqualified hooks to an existing method', function(done) {
 				instance.addHooks('test')
 					.pre('test', pre)
 					.post('test', post)
-					.test();
-				expect(called).to.eql(['pre', 'original', 'post']);
+					.test(function() {
+						expect(called).to.eql(['pre', 'original', 'post']);
+						done();
+					});
 			});
 			it('should throw an error if the method doesn\'t exist', function() {
 				expect(function() {
 					instance.addHooks('nonexistant');
 				}).to.throw(/undeclared method/);
 			});
-			it('should create a method for a qualified hook', function() {
+			it('should create a method for a qualified hook', function(done) {
 				instance.addHooks({'pre:method': original})
 					.hook('pre:method', pre)
-					.method();
-				expect(called).to.eql(['pre', 'original']);
+					.method(function() {
+						expect(called).to.eql(['pre', 'original']);
+						done();
+					});
 			});
-			it('should call a callback passed to the method AFTER everything finishes', function(done){
+			it('should call a callback passed to the method AFTER everything finishes', function(done) {
 				instance.addHooks('test')
 					.pre('test', pre)
 					.post('test', post)
-					.test(function(){
+					.test(function() {
 						expect(called).to.eql(['pre', 'original', 'post']);
 						done();
 					});
