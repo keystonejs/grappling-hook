@@ -207,12 +207,10 @@ describe('-- grappling-hook --', function() {
 			beforeEach(function() {
 				passed = {
 					scope: undefined,
-					args : undefined,
+					args: undefined,
 					async: false
 				};
-				callback = function(foo,
-									bar,
-									next) {
+				callback = function(foo, bar, next) {
 					passed.args = [foo, bar];
 					passed.scope = this;
 					setTimeout(function() {
@@ -412,7 +410,7 @@ describe('-- grappling-hook --', function() {
 						expect(called).to.eql(['pre', 'original', 'post']);
 						done();
 					});
-			})
+			});
 		});
 	});
 	describe('lenient instance', function() {

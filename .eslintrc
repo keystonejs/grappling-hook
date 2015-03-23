@@ -8,6 +8,7 @@
 		"no-shadow": 0,
 		"no-trailing-spaces": 0,
 		"no-underscore-dangle": 0,
+		"no-unused-expressions": 0,
 		"quotes": [2, "single", "avoid-escape"],
 		"semi": 2,
 		"strict": 0
