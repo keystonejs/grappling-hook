@@ -7,7 +7,7 @@
     "test": "mocha tests.js",
     "lint": "eslint ./; true",
     "test-cov": "istanbul cover _mocha tests.js",
-    "travis": "npm test; npm run style"
+    "travis": "npm test; npm run lint"
   },
   "repository": {
     "type": "git",
