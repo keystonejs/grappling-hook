@@ -27,8 +27,9 @@ var grappling = require('grappling-hook');
 var instance = grappling.create(); // create an instance
 
 instance.addHooks({ // declare the hookable methods
-	save: function(){
+	save: function(done){
 		console.log('save!');
+		done && done();
 	}
 });
 
@@ -55,8 +56,9 @@ Or you can choose to enable hooking for an already existing object with methods:
 var grappling = require('grappling-hook');
 
 var instance = {
-	save : function(){
+	save : function(done){
 		console.log('save!');
+		done && done();
 	}
 };
 
@@ -87,8 +89,9 @@ Or you can patch a `prototype` with `grappling-hook` methods:
 var grappling = require('grappling-hook');
 
 var Clazz = function(){};
-Clazz.prototype.save = function(){
+Clazz.prototype.save = function(done){
 	console.log('save!');
+	done && done();
 }
 
 grappling.attach(Clazz); // attach grappling-hook functionality to a 'class'
