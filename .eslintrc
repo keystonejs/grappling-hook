@@ -5,6 +5,7 @@
 	},
 	"rules": {
 		"curly": [2, "multi-line"],
+		"no-shadow": 0,
 		"no-trailing-spaces": 0,
 		"no-underscore-dangle": 0,
 		"quotes": [2, "single", "avoid-escape"],

@@ -7,8 +7,8 @@ var _ = require('lodash'),
 function init(opts) {
 	this.__grappling = {
 		middleware: {},
-		hooks     : [],
-		opts      : _.defaults({}, opts, {
+		hooks: [],
+		opts: _.defaults({}, opts, {
 			strict: true
 		})
 	};
@@ -74,7 +74,7 @@ function createHooks(instance, config) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
 			var args = _.toArray(arguments),
-				n = args.length- 1,
+				n = args.length - 1,
 				middleware = instance.getMiddleware('pre:' + hookObj.name),
 				callback = _.isFunction(args[n]) ? args.shift() : undefined;
 			middleware.push(function(next){
@@ -291,7 +291,7 @@ function create(opts) {
 }
 
 module.exports = {
-	mixin : mixin,
+	mixin: mixin,
 	create: create,
 	attach: attach
 };

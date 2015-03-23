@@ -1,6 +1,5 @@
 'use strict';
-/* global describe, it, beforeEach */
-/* jshint unused:false */
+/* eslint-env node, mocha */
 
 var expect = require('must');
 var subject = require('./index');
