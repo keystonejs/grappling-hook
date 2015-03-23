@@ -1,0 +1,41 @@
+{
+  "name": "grappling-hook",
+  "version": "1.0.0",
+  "description": "Pre/Post hooking mechanism",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha tests.js",
+    "style": "eslint index.js tests.js; true",
+    "test-cov": "istanbul cover _mocha tests.js",
+    "travis": "npm test; npm run style"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keystonejs/grappling-hook"
+  },
+  "keywords": [
+    "events",
+    "hooks",
+    "async",
+    "keystone"
+  ],
+  "author": "Camille Reynders",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/keystonejs/keystone-hooks/issues"
+  },
+  "homepage": "https://github.com/keystonejs/keystone-hooks",
+  "dependencies": {
+    "async": "^0.9.0",
+    "asyncdi": "^1.1.0",
+    "lodash": "^3.5.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^2.0.2",
+    "eslint": "^0.17.0",
+    "istanbul": "^0.3.8",
+    "mocha": "^2.2.1",
+    "must": "^0.12.0",
+    "sinon": "^1.14.0"
+  }
+}
