@@ -1,3 +1,7 @@
+# grappling-hook
+[![Build Status](https://travis-ci.org/keystonejs/grappling-hook.svg)](https://travis-ci.org/keystonejs/grappling-hook)
+[![npm version](https://badge.fury.io/js/grappling-hook.svg)](http://npmjs.org/packages/grappling-hook)
+
 >pre/post hooking enabler 
 
 `grappling-hook` allows you to add pre/post hooks to objects and prototypes.
