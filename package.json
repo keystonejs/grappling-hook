@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha tests.js",
-    "style": "eslint index.js tests.js; true",
+    "lint": "eslint ./; true",
     "test-cov": "istanbul cover _mocha tests.js",
     "travis": "npm test; npm run style"
   },
@@ -31,7 +31,6 @@
     "lodash": "^3.5.0"
   },
   "devDependencies": {
-    "babel-eslint": "^2.0.2",
     "eslint": "^0.17.0",
     "istanbul": "^0.3.8",
     "mocha": "^2.2.1",
