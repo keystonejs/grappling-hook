@@ -6,8 +6,8 @@ var _ = require('lodash'),
 function init(opts) {
 	this.__grappling = {
 		middleware: {},
-		hooks: [],
-		opts: _.defaults({}, opts, {
+		hooks     : [],
+		opts      : _.defaults({}, opts, {
 			strict: true
 		})
 	};
@@ -45,20 +45,19 @@ function addMiddleware(instance, hook, args) {
 function iterateMiddleware(context, middleware, args, done) {
 	args = args || [];
 	async.eachSeries(middleware, function(callback, next) {
-		if(callback.length>args.length){
-			//async
-			callback.apply(context, args.concat(next));
-		}else{
-			//sync
-			callback.apply(context, args);
-			next();
-		}
-	}, done || function(err) {
-		if (err) {
-			throw err;
-		}
+			if (callback.length > args.length) {
+				//async
+				callback.apply(context, args.concat(next));
+			} else {
+				//sync
+				callback.apply(context, args);
+				next();
+			}
+		}, done || function(err) {
+			if (err) {
+				throw err;
+			}
 	});
-
 }
 
 /**
@@ -82,7 +81,7 @@ function createHooks(instance, config) {
 				n = args.length - 1,
 				middleware = instance.getMiddleware('pre:' + hookObj.name),
 				callback = _.isFunction(args[n]) ? args.shift() : undefined;
-			middleware.push(function(next){
+			middleware.push(function(next) {
 				args.push(next);
 				fn.apply(instance, args);
 			});
@@ -296,7 +295,7 @@ function create(opts) {
 }
 
 module.exports = {
-	mixin: mixin,
+	mixin : mixin,
 	create: create,
 	attach: attach
 };
