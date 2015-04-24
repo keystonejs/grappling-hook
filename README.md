@@ -119,9 +119,7 @@ All of this is pretty standard stuff, there's two things to note here though:
 ### Adding middleware
 
 Middleware is added mainly with the `pre` and `post` methods. 
-`grappling-hook` allows you to add both sync and async functions. An async middleware function simply declares a `next` parameter last.
-
-**N.B.**: This parameter _has_ to be called `next` or `callback`, otherwise it won't be recognized as being an async function.
+`grappling-hook` allows you to add both sync and async functions. An async middleware function simply accepts an extra callback function.
 
 ```js
 instance.pre('save', function(next){
