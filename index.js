@@ -44,10 +44,16 @@ function addMiddleware(instance, hook, args) {
 }
 
 function iterateMiddleware(context, middleware, args, done) {
+	args = args || [];
 	async.eachSeries(middleware, function(callback, next) {
-		di(callback, context, {callback: ['next', 'callback']}).provides(args).call(function(err) {
-			next(err);
-		});
+		if(callback.length>args.length){
+			//async
+			callback.apply(context, args.concat(next));
+		}else{
+			//sync
+			callback.apply(context, args);
+			next();
+		}
 	}, done || function(err) {
 		if (err) {
 			throw err;
