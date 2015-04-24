@@ -44,19 +44,48 @@ function addMiddleware(instance, hook, args) {
 
 function iterateMiddleware(context, middleware, args, done) {
 	args = args || [];
-	async.eachSeries(middleware, function(callback, next) {
-			if (callback.length > args.length) {
-				//async
-				callback.apply(context, args.concat(next));
-			} else {
-				//sync
-				callback.apply(context, args);
-				next();
-			}
-		}, done || function(err) {
+	done = done || function(err) {
 			if (err) {
 				throw err;
 			}
+		};
+	var asyncFinished = false;
+	var waiting = [];
+	var wait = function(callback) {
+		waiting.push(callback);
+		return function(err) {
+			waiting.splice(waiting.indexOf(callback), 1);
+			if (asyncFinished !== done) {
+				if (err || (asyncFinished && !waiting.length)) {
+					done(err);
+				}
+			}
+		};
+	};
+	async.eachSeries(middleware, function(callback, next) {
+		var d = callback.length - args.length;
+		switch (d) {
+			case 1: //async series
+				callback.apply(context, args.concat(next));
+				break;
+			case 2: //async parallel
+				callback.apply(context, args.concat(next, wait(callback)));
+				break;
+			default :
+				//synced
+				var err;
+				try {
+					callback.apply(context, args);
+				} catch (e) {
+					err = e;
+				}
+				next(err);
+		}
+	}, function(err) {
+		asyncFinished = (err) ? done : true;
+		if (err || !waiting.length) {
+			done(err);
+		}
 	});
 }
 
