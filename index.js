@@ -1,7 +1,6 @@
 'use strict';
 
 var _ = require('lodash'),
-	di = require('asyncdi'),
 	async = require('async');
 
 function init(opts) {
