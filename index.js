@@ -1,13 +1,13 @@
 'use strict';
 
-var _ = require('lodash'),
-	async = require('async');
+var _ = require('lodash');
+var async = require('async');
 
 function init(opts) {
 	this.__grappling = {
 		middleware: {},
-		hooks     : [],
-		opts      : _.defaults({}, opts, {
+		hooks: [],
+		opts: _.defaults({}, opts, {
 			strict: true
 		})
 	};
@@ -295,7 +295,7 @@ function create(opts) {
 }
 
 module.exports = {
-	mixin : mixin,
+	mixin: mixin,
 	create: create,
 	attach: attach
 };
