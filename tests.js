@@ -260,7 +260,19 @@ describe('-- grappling-hook --', function() {
 					done();
 				});
 			});
-			it('should stop execution of middleware if an error was passed through', function(done) {
+			it('should stop execution of middleware if a sync callback throws an error', function(done) {
+				var error = new Error('middleware error');
+				var shouldNotBeCalled = true;
+				instance.hook(POST_TEST, function() {
+					throw error;
+				}, function() {
+					shouldNotBeCalled = false;
+				}).callHook(POST_TEST, function() {
+					expect(shouldNotBeCalled).to.be.true();
+					done();
+				});
+			});
+			it('should stop execution of middleware if an async serial callback passes an error', function(done) {
 				var error = new Error('middleware error');
 				var shouldNotBeCalled = true;
 				instance.hook(POST_TEST, function(next) {
@@ -272,7 +284,36 @@ describe('-- grappling-hook --', function() {
 					done();
 				});
 			});
-			it('should throw middleware errors by default', function() {
+			it('should stop execution of middleware if an async parallel callback passes an error in `next`', function(done) {
+				var error = new Error('middleware error');
+				var shouldNotBeCalled = true;
+				instance.hook(POST_TEST, function(next, done) {
+					next(error);
+					done();
+				}, function() {
+					shouldNotBeCalled = false;
+				}).callHook(POST_TEST, function() {
+					expect(shouldNotBeCalled).to.be.true();
+					done();
+				});
+			});
+			it('should stop execution of middleware if an async parallel callback passes an error in `done`', function(done) {
+				var error = new Error('middleware error');
+				var shouldNotBeCalled = true;
+				instance.hook(POST_TEST, function(next, done) {
+					next();
+					done(error);
+				}, function(next) {
+					setTimeout(function(){
+						shouldNotBeCalled = false;
+						next();
+					}, 0);
+				}).callHook(POST_TEST, function() {
+					expect(shouldNotBeCalled).to.be.true();
+					done();
+				});
+			});
+			it('should throw middleware errors by default, when no `callback` is provided', function() {
 				var error = new Error('middleware error');
 
 				instance.hook(POST_TEST, function(next) {
@@ -429,6 +470,70 @@ describe('-- grappling-hook --', function() {
 		});
 		it('it should allow all hooks', function() {
 			expect(instance.hookable('pre:nonexistant')).to.be.true();
+		});
+	});
+	describe('call sequence', function() {
+		var sequence,
+			instance;
+
+		function createParallel(name) {
+			return function(next, done) {
+				sequence.push(name + ' setup');
+				setTimeout(function() {
+					sequence.push(name + ' done');
+					done();
+				}, 0);
+				next();
+			};
+		}
+
+		function createAsync(name) {
+			return function(done) {
+				sequence.push(name + ' setup');
+				setTimeout(function() {
+					sequence.push(name + ' done');
+					done();
+				}, 0);
+			};
+		}
+
+		function createSync(name) {
+			return function() {
+				sequence.push(name + ' done');
+			};
+		}
+
+		beforeEach(function() {
+			sequence = [];
+			instance = subject.create();
+			instance.allowHooks(PRE_TEST);
+		});
+		it('should call sync/async/parallel middleware in a correct sequence', function(done) {
+			var expected = [
+				'parallel A setup',
+				'sync done',
+				'parallel B setup',
+				'parallel C setup',
+				'async A setup',
+				'parallel A done',
+				'parallel B done',
+				'parallel C done',
+				'async A done',
+				'async B setup',
+				'async B done'
+			];
+			instance.pre('test',
+				createParallel('parallel A'),
+				createSync('sync'),
+				createParallel('parallel B'),
+				createParallel('parallel C'),
+				createAsync('async A'),
+				createAsync('async B')
+			);
+			instance.callHook(PRE_TEST, function() {
+				expect(sequence).to.eql(expected);
+				done();
+			});
 		});
 	});
 });
