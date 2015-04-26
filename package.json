@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha tests.js",
-    "lint": "eslint ./; true",
+    "lint": "eslint index.js tests.js; true",
     "test-cov": "istanbul cover _mocha tests.js",
     "travis": "npm test; npm run lint"
   },
