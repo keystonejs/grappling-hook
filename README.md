@@ -122,26 +122,83 @@ All of this is pretty standard stuff, there's two things to note here though:
 ### Adding middleware
 
 Middleware is added mainly with the `pre` and `post` methods. 
-`grappling-hook` allows you to add both sync and async functions. An async middleware function simply accepts an extra callback function.
+
+#### Middleware types
+
+`grappling-hook` allows you to add both sync and async functions, run in series or parallel. 
+The type of function is identified through the parameters it accepts:
+
+- **Sync**: no callbacks are accepted.
+
+	```js
+	instance.pre('save', function(){
+		// will run synchronously, the next middleware will be executed immediately once this has finished
+	});
+	```
+
+- **Async serial**: a single callback is accepted
+
+	```js
+	instance.pre('save', function(next){
+		//execution of following middleware is halted until `next` is called
+		setTimeout(next, 1000);
+	});
+	```
+
+- **Async/sync parallel**: two callbacks are accepted
+
+	```js
+	instance.pre('save', function(next, done){
+		//execution of following middleware is halted until `next` is called
+		setTimeout(next, 500);
+		//the full middleware queue is considered finished once all parallel `done` callbacks have finished
+		setTimeout(done, 1000);
+	});
+	```
+	
+You can **mix sync/async serial/parallel middleware** any way you choose:
 
 ```js
 instance.pre('save', function(next){
+	//async serial
+	console.log('A setup');
 	setTimeout(function(){
-		console.log('async');
+		console.log('A done');
 		next();
 	}, 1000);
 }, function(){
-	console.log('sync');
+	//sync
+	console.log('B done');
+}, function(next, done){
+	//async parallel
+	console.log('C setup');
+	setTimeout(function(){
+		console.log('C done');
+		done();
+	}, 2000);
+	next();
+}, function(next, done){
+	//async parallel
+	console.log('D setup');
+	setTimeout(function(){
+		console.log('D done');
+		done();
+	}, 300);
+	next();
 });
 ```
 ```sh
 # output
-async
-sync
+A setup
+A done
+B done
+C setup
+D setup
+D done
+C done
 ```
 
-All middleware is called serially, i.e. execution of the next middleware function will happen _after_ the first middleware has completed its asynchronous operation.
-Parallel and mixed (parallel and serial) execution is on the roadmap and will be added soon!
+#### Qualified hooks
 
 We've provided another (convenience) method to add middleware too: `hook`. It registers middleware to a qualified hook (e.g. `pre:save`).
 
@@ -156,10 +213,16 @@ instance.save();
 pre
 ```
 
-All of the middleware addition methods accept any number of middleware to be added, either as parameters or as an array (or as mix);
+#### Easy parameter passing
+
+We like to cater to many coding styles: all of the middleware addition methods accept any number of middleware to be added, either as parameters or as an array (or as a mix);
 
 ```js
 instance.pre('save', fn1, fn2, [fn3, fn4], fn5);
+// equals:
+instance.pre('save', [fn1, fn2, fn3, fn4, fn5]);
+// equals:
+instance.pre('save', fn1, fn2, fn3, fn4, fn5);
 ```
 
 ### Removing middleware
@@ -193,14 +256,18 @@ instance.pre('save', function(){
 	console.log('saving!');
 });
 
-instance.callHook('pre:save');
+instance.callHook('pre:save'); // <--- let's run our middleware
 ```
 ```sh
 # output:
 saving!
 ```
 
-This also allows us to pass specific arguments to our middleware:
+**N.B.**: Only qualified hooks (e.g. "pre:save", NOT "save") are callable, since it doesn't really make sense to call both pre/post hooks consecutively, w/o doing anything in between.
+
+#### parameters
+
+You can pass any number of parameters to your middleware:
 
 ```js
 instance.pre('save', function(foo, bar){
@@ -214,7 +281,23 @@ instance.callHook('pre:save', "foo", { bar: "bar"});
 saving! foo { bar: 'bar' }
 ```
 
-**N.B.**: Only qualified hooks (e.g. "pre:save", NOT "save") are callable, since it doesn't really make sense to call both pre/post hooks consecutively, w/o doing anything in between.
+Again, parameters are parsed forgivingly, e.g.:
+
+```js
+instance.callHook('pre:save', "foo", { bar: "bar"});
+// equals:
+instance.callHook('pre:save', ["foo", { bar: "bar"}]);
+// equals:
+instance.callHook('pre:save', ["foo"], { bar: "bar"});
+```
+
+There's one caveat: **if you wish to pass functions to your middleware, it's best to wrap them in an Array**, since otherwise the last one will be regarded as a _final_ callback, i.e. it won't be passed to the middleware, but will be executed once all middleware has finished.
+
+```js
+instance.callHook('pre:save', [fn1, fn2, fn3]);
+```
+
+#### context
 
 By default all middleware is called with the hooking instance as an execution context, e.g.:
 
@@ -256,12 +339,15 @@ instance.callHook(context, 'pre:save');
 Different context!
 ```
 
-And last, but definitely not least, if you want to be able to respond to all middleware having completed their execution, you can pass a function as the last parameter to `callHook`:
+#### callback
+
+And last, but definitely not least, if you want to be able to respond to all middleware (sync/async serial/parallel) having completed their execution, you can pass a function as the last parameter to `callHook`:
 
 ```js
 instance.pre('save', function asyncMiddleware(next){
 	setTimeout(function(){
-		console.log("middleware")
+		console.log("middleware");
+		next();
 	}, 1000);
 });
 
@@ -273,6 +359,14 @@ instance.callHook('pre:save', function(){
 # output:
 middleware
 We're finished!
+```
+
+The full function signature of `callHook`:
+
+```js
+function callHook([context], qualifiedHook, [...params[]], [callback])
+// e.g.
+this.callHook(delegate, 'pre:save', "foo", "bar", {baz: qux}, this.save);
 ```
 
 ### Middleware introspection
@@ -300,3 +394,40 @@ var instance = grappling.create({
 });
 ```
 
+### Error handling
+
+Errors will halt the execution of the middleware queue and are passed to the final callback.
+There's two ways to pass errors from middleware functions:
+
+- sync middleware can throw errors
+
+	```js
+	instance.pre('save', function(){
+		throw new Error("Oh noes!");
+	});
+	instance.callHook('pre:save', function(err){
+		if(err){
+			console.log('An error occurred:', err);
+		}
+	});
+	```
+	```sh
+	# output:
+	An error occurred: Oh noes!
+	```
+	
+- async middleware can pass errors to their `next` (serial or parallel) or `done` (parallel only) callbacks:
+
+	```js
+	//async serial
+	instance.pre('save', function(next){
+		next(new Error("Oh noes!"));
+	});
+	```	
+	```js
+	//async parallel
+	instance.pre('save', function(next, done){
+		next();
+		done(new Error("Oh noes!"));
+	});
+	```	
