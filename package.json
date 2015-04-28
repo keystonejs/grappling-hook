@@ -1,6 +1,6 @@
 {
   "name": "grappling-hook",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Pre/Post hooking mechanism",
   "main": "index.js",
   "scripts": {
