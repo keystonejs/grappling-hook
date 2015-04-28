@@ -13,7 +13,7 @@ Ref.prototype.clone = function(opts){
 };
 
 Ref.prototype.toString = function(){
-	return this.name + ' ('+ this.type + ') '+ this.phase;
+	return this.name + ' (' + this.type + ') ' + this.phase;
 };
 
 module.exports.createParallel = function createParallel(name, receiver) {
@@ -123,5 +123,5 @@ module.exports.createSyncWithArgs = function createSyncWithArgs(name, receiver) 
 module.exports.toRefString = function(sequence){
 	return _.map(sequence, function(ref){
 		return ref.toString();
-	})
+	});
 };

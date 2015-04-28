@@ -1,10 +1,9 @@
-"use strict";
+'use strict';
 
 /* eslint-env node, mocha */
 
 var expect = require('must');
 var subject = require('../index');
-var sinon = require('sinon');
 var $ = require('./fixtures');
 
 describe('-- call sequence --', function() {
