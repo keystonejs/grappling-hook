@@ -140,18 +140,18 @@ describe('-- API --', function() {
 				var actual = instance.hook($.PRE_TEST);
 				expect(actual).to.equal(instance);
 			});
-			it('should register a single callback', function() {
+			it('should register a single callback as middleware', function() {
 				instance.hook($.PRE_TEST, callback)
 					.callHook($.PRE_TEST)
 					.callHook($.POST_TEST);
 				expect(callback.callCount).to.equal(1);
 			});
-			it('should register multiple callbacks', function() {
+			it('should register multiple middleware', function() {
 				instance.hook($.PRE_TEST, callback, callback, callback)
 					.callHook($.PRE_TEST);
 				expect(callback.callCount).to.equal(3);
 			});
-			it('should register an array of callbacks', function() {
+			it('should register an array of middleware', function() {
 				var hooks = [callback, callback, callback];
 				instance.hook($.PRE_TEST, hooks)
 					.callHook($.PRE_TEST);
@@ -170,7 +170,7 @@ describe('-- API --', function() {
 					instance.getMiddleware('test');
 				}).to.throw(/qualified/);
 			});
-			it('should return empty array if no callbacks are registered for the hook', function() {
+			it('should return empty array if no middleware registered for the hook', function() {
 				var actual = instance.getMiddleware($.PRE_TEST);
 				expect(actual).to.eql([]);
 			});
@@ -178,7 +178,7 @@ describe('-- API --', function() {
 				var actual = instance.getMiddleware('pre:nonexistant');
 				expect(actual).to.eql([]);
 			});
-			it('should retrieve all callbacks for a hook', function() {
+			it('should retrieve all middleware for a hook', function() {
 				var actual = instance.hook($.PRE_TEST, callback)
 					.getMiddleware($.PRE_TEST);
 				expect(actual).to.eql([callback]);
@@ -196,11 +196,11 @@ describe('-- API --', function() {
 					instance.hasMiddleware('test');
 				}).to.throw(/qualified/);
 			});
-			it('should return `false` if no callbacks are registered for the hook', function() {
+			it('should return `false` if no middleware is registered for the hook', function() {
 				var actual = instance.hasMiddleware($.PRE_TEST);
 				expect(actual).to.be.false();
 			});
-			it('should return `true` if callbacks are registered for the hook', function() {
+			it('should return `true` if middleware is registered for the hook', function() {
 				var actual = instance.hook($.PRE_TEST, callback)
 					.hasMiddleware($.PRE_TEST);
 				expect(actual).to.be.true();
@@ -228,112 +228,34 @@ describe('-- API --', function() {
 				instance.allowHooks('test')
 					.hook($.PRE_TEST, callback);
 			});
-			it('should throw an error for an unqualified hook', function() {
+			it('should throw an error for an unqualified hook', function(done) {
 				expect(function() {
 					instance.callHook('test');
 				}).to.throw(/qualified/);
+				done();
 			});
-			it('should return the instance', function(){
-				var actual = instance.callHook($.PRE_TEST);
+			it('should return the instance', function(done){
+				var actual = instance.callHook($.PRE_TEST, foo, bar, done);
 				expect(actual).to.equal(instance);
 			});
-			it('should pass `...parameters` to callbacks', function() {
-				instance.callHook($.PRE_TEST, foo, bar);
+			it('should pass `...parameters` to middleware', function(done) {
+				instance.callHook($.PRE_TEST, foo, bar, done);
 				expect(passed.args).to.eql([foo, bar]);
 			});
-			it('should pass `parameters[]` to callbacks', function() {
-				instance.callHook($.PRE_TEST, [foo, bar]);
+			it('should pass `parameters[]` to middleware', function(done) {
+				instance.callHook($.PRE_TEST, [foo, bar], done);
 				expect(passed.args).to.eql([foo, bar]);
 			});
-			it('execute callbacks in scope `context`', function() {
-				instance.hook($.PRE_TEST, callback);
+			it('execute middleware in scope `context`', function(done) {
 				var context = {};
-				instance.callHook(context, $.PRE_TEST, [foo, bar]);
+				instance.callHook(context, $.PRE_TEST, [foo, bar], done);
 				expect(passed.scope).to.equal(context);
 			});
-			it('execute callbacks in scope `instance` by default', function() {
-				instance.hook($.PRE_TEST, callback);
-				instance.callHook($.PRE_TEST, [foo, bar]);
+			it('execute middleware in scope `instance` by default', function(done) {
+				instance.callHook($.PRE_TEST, [foo, bar], done);
 				expect(passed.scope).to.equal(instance);
 			});
-			it('should call `callback` when all callbacks have been called', function(done) {
-				instance.callHook($.PRE_TEST, [foo, bar], function() {
-					expect(passed.async).to.be.true();
-					done();
-				});
-			});
-			it('should pass `err` to `callback` if a middleware passed it through', function(done) {
-				var error = new Error('middleware error');
-				instance.hook($.POST_TEST, function(next) {
-					next(error);
-				}).callHook($.POST_TEST, function(err) {
-					expect(err).to.equal(error);
-					done();
-				});
-			});
-			it('should stop execution of middleware if a sync callback throws an error', function(done) {
-				var error = new Error('middleware error');
-				var shouldNotBeCalled = true;
-				instance.hook($.POST_TEST, function() {
-					throw error;
-				}, function() {
-					shouldNotBeCalled = false;
-				}).callHook($.POST_TEST, function() {
-					expect(shouldNotBeCalled).to.be.true();
-					done();
-				});
-			});
-			it('should stop execution of middleware if an async serial callback passes an error', function(done) {
-				var error = new Error('middleware error');
-				var shouldNotBeCalled = true;
-				instance.hook($.POST_TEST, function(next) {
-					next(error);
-				}, function() {
-					shouldNotBeCalled = false;
-				}).callHook($.POST_TEST, function() {
-					expect(shouldNotBeCalled).to.be.true();
-					done();
-				});
-			});
-			it('should stop execution of middleware if an async parallel callback passes an error in `next`', function(done) {
-				var error = new Error('middleware error');
-				var shouldNotBeCalled = true;
-				instance.hook($.POST_TEST, function(next, done) {
-					next(error);
-					done();
-				}, function() {
-					shouldNotBeCalled = false;
-				}).callHook($.POST_TEST, function() {
-					expect(shouldNotBeCalled).to.be.true();
-					done();
-				});
-			});
-			it('should stop execution of middleware if an async parallel callback passes an error in `done`', function(done) {
-				var error = new Error('middleware error');
-				var shouldNotBeCalled = true;
-				instance.hook($.POST_TEST, function(next, done) {
-					next();
-					done(error);
-				}, function(next) {
-					setTimeout(function(){
-						shouldNotBeCalled = false;
-						next();
-					}, 0);
-				}).callHook($.POST_TEST, function() {
-					expect(shouldNotBeCalled).to.be.true();
-					done();
-				});
-			});
-			it('should throw middleware errors by default, when no `callback` is provided', function() {
-				var error = new Error('middleware error');
-
-				instance.hook($.POST_TEST, function(next) {
-					next(error);
-				});
-				expect(function() {
-					instance.callHook($.POST_TEST);
-				}).to.throw(error.message);
-			});
+			//see sequencing.spec for callback handling in `callHook(hookName, callback)`
 		});
 		describe('#unhook', function() {
 			var c1, c2;
@@ -347,21 +269,21 @@ describe('-- API --', function() {
 				var actual = instance.unhook($.PRE_TEST);
 				expect(actual).to.equal(instance);
 			});
-			it('should remove specified callbacks for a qualified hook', function() {
+			it('should remove specified middleware for a qualified hook', function() {
 				instance.allowHooks($.PRE_TEST)
 					.hook($.PRE_TEST, c1, c2)
 					.unhook($.PRE_TEST, c1);
 				var actual = instance.getMiddleware($.PRE_TEST);
 				expect(actual).to.eql([c2]);
 			});
-			it('should remove all callbacks for a qualified hook', function() {
+			it('should remove all middleware for a qualified hook', function() {
 				instance.allowHooks($.PRE_TEST)
 					.hook($.PRE_TEST, c1, c2)
 					.unhook($.PRE_TEST);
 				var actual = instance.getMiddleware($.PRE_TEST);
 				expect(actual).to.eql([]);
 			});
-			it('should remove all callbacks for an unqualified hook', function() {
+			it('should remove all middleware for an unqualified hook', function() {
 				instance.allowHooks('test')
 					.hook($.PRE_TEST, c1, c2)
 					.hook($.POST_TEST, c1, c2)
@@ -369,14 +291,14 @@ describe('-- API --', function() {
 				var actual = instance.getMiddleware($.PRE_TEST);
 				expect(actual).to.eql([]);
 			});
-			it('should throw an error if callbacks are specified for an unqualified hook', function() {
+			it('should throw an error if middleware are specified for an unqualified hook', function() {
 				instance.allowHooks($.PRE_TEST)
 					.hook($.PRE_TEST, c1, c2);
 				expect(function() {
 					instance.unhook('test', c1);
 				}).to.throw(/qualified/);
 			});
-			it('should remove all callbacks ', function() {
+			it('should remove all middleware ', function() {
 				instance.allowHooks('test')
 					.hook($.PRE_TEST, c1, c2)
 					.hook($.POST_TEST, c1, c2)
