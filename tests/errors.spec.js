@@ -55,18 +55,18 @@ describe('-- error handling --', function() {
 				setTimeout(function() {
 					next(error);
 				}, 0);
-			})
+			});
 		});
 		testErrorHandling();
 	});
 
 	describe('an error passed to `next` by an async parallel middleware function', function() {
 		beforeEach(function() {
-			instance.hook($.PRE_TEST, function(next, done) {
+			instance.hook($.PRE_TEST, function(next, done) {//eslint-disable-line no-unused-vars
 				setTimeout(function() {
 					next(error);
 				}, 0);
-			})
+			});
 		});
 		testErrorHandling();
 	});

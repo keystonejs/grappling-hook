@@ -42,6 +42,25 @@ function addMiddleware(instance, hook, args) {
 	cache.middleware[hook] = mw.concat(fns);
 }
 
+/*
+	based on code from Isaac Schlueter's blog post: 
+	http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony
+ */
+function dezalgo(callback, context, args, next, done){
+	var isSync = true;
+	callback.apply(context, args.concat(safeNext, done)); //eslint-disable-line no-use-before-define
+	isSync = false;
+	function safeNext(err){
+		if(isSync){
+			process.nextTick(function(){
+				next(err);
+			});
+		}else{
+			next(err);
+		}
+	}
+}
+
 function iterateMiddleware(context, middleware, args, done) {
 	args = args || [];
 	done = done || function(err) {
@@ -66,10 +85,10 @@ function iterateMiddleware(context, middleware, args, done) {
 		var d = callback.length - args.length;
 		switch (d) {
 			case 1: //async series
-				callback.apply(context, args.concat(next));
+				dezalgo(callback, context, args, next);
 				break;
 			case 2: //async parallel
-				callback.apply(context, args.concat(next, wait(callback)));
+				dezalgo(callback, context, args, next, wait(callback));
 				break;
 			default :
 				//synced
@@ -115,7 +134,7 @@ function createHooks(instance, config) {
 				fn.apply(instance, args);
 			});
 			middleware = middleware.concat(instance.getMiddleware('post:' + hookObj.name));
-			iterateMiddleware(instance, middleware, null, callback);
+			dezalgo(iterateMiddleware, null, [instance, middleware, null], callback);
 		};
 	});
 }
@@ -278,7 +297,7 @@ var methods = {
 			done = args.pop(); //drop callback
 		}
 		args = _.flatten(args);// in case parameters were passed in as an array; this is 2-dim, we need 1-dim
-		iterateMiddleware(context, this.getMiddleware(hook), args, done);
+		dezalgo(iterateMiddleware, null, [context, this.getMiddleware(hook), args], done);
 		return this;
 	},
 
@@ -289,7 +308,11 @@ var methods = {
 	 */
 	getMiddleware: function(hook) {
 		qualifyHook(parseHook(hook));
-		return this.__grappling.middleware[hook] || [];
+		var middleware = this.__grappling.middleware[hook];
+		if(middleware){
+			return middleware.slice(0);
+		}
+		return [];
 	},
 
 	/**
