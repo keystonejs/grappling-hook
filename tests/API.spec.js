@@ -408,7 +408,7 @@ describe('-- API --', function() {
 				pre = function() {
 					called.push('pre');
 				};
-				original = function(done) {
+				original = function(foo, done) {
 					setTimeout(function() {
 						called.push('original');
 						done && done();
@@ -426,7 +426,7 @@ describe('-- API --', function() {
 			it('should add a qualified hook to an existing method', function(done) {
 				instance.addHooks($.PRE_TEST)
 					.hook($.PRE_TEST, pre)
-					.test(function() {
+					.test('foo', function() {
 						expect(called).to.eql(['pre', 'original']);
 						done();
 					});
@@ -435,7 +435,7 @@ describe('-- API --', function() {
 				instance.addHooks($.PRE_TEST, $.POST_TEST)
 					.pre('test', pre)
 					.post('test', post)
-					.test(function() {
+					.test('foo', function() {
 						expect(called).to.eql(['pre', 'original', 'post']);
 						done();
 					});
@@ -444,7 +444,7 @@ describe('-- API --', function() {
 				instance.addHooks('test')
 					.pre('test', pre)
 					.post('test', post)
-					.test(function() {
+					.test('foo', function() {
 						expect(called).to.eql(['pre', 'original', 'post']);
 						done();
 					});
@@ -457,7 +457,7 @@ describe('-- API --', function() {
 			it('should create a method for a qualified hook', function(done) {
 				instance.addHooks({'pre:method': original})
 					.hook('pre:method', pre)
-					.method(function() {
+					.method('foo', function() {
 						expect(called).to.eql(['pre', 'original']);
 						done();
 					});
@@ -466,7 +466,7 @@ describe('-- API --', function() {
 				instance.addHooks('test')
 					.pre('test', pre)
 					.post('test', post)
-					.test(function() {
+					.test('foo', function() {
 						expect(called).to.eql(['pre', 'original', 'post']);
 						done();
 					});

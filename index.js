@@ -109,7 +109,7 @@ function createHooks(instance, config) {
 			var args = _.toArray(arguments),
 				n = args.length - 1,
 				middleware = instance.getMiddleware('pre:' + hookObj.name),
-				callback = _.isFunction(args[n]) ? args.shift() : undefined;
+				callback = _.isFunction(args[n]) ? args.pop() : undefined;
 			middleware.push(function(next) {
 				args.push(next);
 				fn.apply(instance, args);
