@@ -48,4 +48,32 @@ describe('-- synchronicity --', function() {
 		});
 		isAsync = true;
 	});
+	
+	it('should call the next middleware async even with sync serial middleware', function(done){
+		var isAsync;
+		instance.hook($.PRE_TEST, function(next){
+			isAsync = false;
+			next();
+			isAsync = true;
+		}, function(){
+			expect(isAsync).to.be.true();
+		}).callHook($.PRE_TEST, function(){
+			done();
+		});
+	});
+	
+	it('should call the next middleware async even with sync parallel middleware', function(done){
+		var isAsync;
+		instance.hook($.PRE_TEST, function(next, done){
+			isAsync = false;
+			next();
+			isAsync = true;
+			done();
+		}, function(){
+			expect(isAsync).to.be.true();
+		}).callHook($.PRE_TEST, function(){
+			done();
+		});
+	});
+
 });

@@ -16,7 +16,7 @@ Ref.prototype.toString = function(){
 	return this.name + ' (' + this.type + ') ' + this.phase;
 };
 
-module.exports.createParallel = function createParallel(name, receiver) {
+module.exports.createParallel = function createParallel(name, receiver, timeout) {
 	var ref = new Ref({
 		name: name,
 		type: 'parallel'
@@ -30,7 +30,7 @@ module.exports.createParallel = function createParallel(name, receiver) {
 				phase: 'done'
 			}));
 			done();
-		}, 0);
+		}, timeout || 0);
 		next();
 	};
 };
@@ -125,3 +125,5 @@ module.exports.toRefString = function(sequence){
 		return ref.toString();
 	});
 };
+
+module.exports.Ref = Ref;

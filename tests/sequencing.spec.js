@@ -22,6 +22,64 @@ describe('-- call sequence --', function() {
 			instance = subject.create();
 			instance.allowHooks($.PRE_TEST);
 		});
+
+		it('should finish all parallel middleware in a correct sequence', function(done) {
+			var expected = [
+				'A (parallel) setup',
+				'B (parallel) setup',
+				'C (parallel) setup',
+				'A (parallel) done',
+				'C (parallel) done',
+				'B (parallel) done'
+			];
+			instance.pre('test',
+				$.factories.createParallel('A', sequence, 0),
+				$.factories.createParallel('B', sequence, 200),
+				$.factories.createParallel('C', sequence, 100)
+			);
+			instance.callHook($.PRE_TEST, function() {
+				expect($.factories.toRefString(sequence)).to.eql(expected);
+				done();
+			});
+
+		});
+
+		it('should finish flipped parallel middleware in a correct sequence', function(done) {
+			function flippedParallel(next, done) {
+				setTimeout(function() {
+					sequence.push(new $.factories.Ref({
+						name: 'A',
+						type: 'parallel',
+						phase: 'done'
+					}));
+					done();
+				}, 0);
+				setTimeout(function() {
+					sequence.push(new $.factories.Ref({
+						name: 'A',
+						type: 'parallel',
+						phase: 'setup'
+					}));
+					next();
+				}, 100);
+			}
+			
+			var expected = [
+				'A (parallel) done',
+				'A (parallel) setup',
+				'B (parallel) setup',
+				'B (parallel) done'
+			];
+		
+			instance.pre('test',
+				flippedParallel,
+				$.factories.createParallel('B', sequence)
+			).callHook($.PRE_TEST, function() {
+					expect($.factories.toRefString(sequence)).to.eql(expected);
+					done();
+				});
+		});
+
 		it('should call sync/async/parallel middleware in a correct sequence', function(done) {
 			var expected = [
 				'A (parallel) setup',
