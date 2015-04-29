@@ -92,13 +92,8 @@ function iterateMiddleware(context, middleware, args, done) {
 				break;
 			default :
 				//synced
-				var err;
-				try {
-					callback.apply(context, args);
-				} catch (e) {
-					err = e;
-				}
-				next(err);
+				callback.apply(context, args);
+				next();
 		}
 	}, function(err) {
 		asyncFinished = (err) ? done : true;

@@ -396,10 +396,7 @@ var instance = grappling.create({
 
 ### Error handling
 
-Errors will halt the execution of the middleware queue and are passed to the final callback.
-There's two ways to pass errors from middleware functions:
-
-- sync middleware can throw errors
+- Errors thrown in sync middleware will bubble through 
 
 	```js
 	instance.pre('save', function(){
@@ -407,13 +404,13 @@ There's two ways to pass errors from middleware functions:
 	});
 	instance.callHook('pre:save', function(err){
 		if(err){
-			console.log('An error occurred:', err);
+			console.log('An error occurred:', err); // <--- will not be called
 		}
 	});
 	```
 	```sh
 	# output:
-	An error occurred: Oh noes!
+	Error: Oh noes!
 	```
 	
 - async middleware can pass errors to their `next` (serial or parallel) or `done` (parallel only) callbacks:
@@ -431,3 +428,14 @@ There's two ways to pass errors from middleware functions:
 		done(new Error("Oh noes!"));
 	});
 	```	
+	```js
+	instance.callHook('pre:save', function(err){
+		if(err){
+			console.log('An error occurred:', err);
+		}
+	});
+	```
+	```sh
+	# output for both:
+	An error occurred: Oh noes!
+	```

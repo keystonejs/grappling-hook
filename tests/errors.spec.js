@@ -46,7 +46,11 @@ describe('-- error handling --', function() {
 				throw error;
 			});
 		});
-		testErrorHandling();
+		it("should bubble through", function(){
+			expect(function(){
+				instance.callHook($.PRE_TEST);
+			}).to.throw(/middleware error/);
+		});
 	});
 
 	describe('an error passed to `next` by an async serial middleware function', function() {
