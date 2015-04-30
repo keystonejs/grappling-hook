@@ -23,7 +23,7 @@ describe('-- API --', function() {
 			expect(subject.attach).to.be.a.function();
 		});
 	});
-	describe('static members', function(){
+	describe('static members', function() {
 		describe('.mixin', function() {
 			it('should add grappling-hook functions to an existing object', function() {
 				var instance = {};
@@ -78,7 +78,7 @@ describe('-- API --', function() {
 					instance.allowHooks('nope:not valid!');
 				}).to.throw(/pre|post/);
 			});
-			it('should return the instance', function(){
+			it('should return the instance', function() {
 				var actual = instance.allowHooks($.PRE_TEST);
 				expect(actual).to.equal(instance);
 			});
@@ -136,7 +136,7 @@ describe('-- API --', function() {
 					instance.hook('pre:notAllowed');
 				}).to.throw(/not supported/);
 			});
-			it('should return the instance', function(){
+			it('should return the instance', function() {
 				var actual = instance.hook($.PRE_TEST);
 				expect(actual).to.equal(instance);
 			});
@@ -214,16 +214,11 @@ describe('-- API --', function() {
 			beforeEach(function() {
 				passed = {
 					scope: undefined,
-					args: undefined,
-					async: false
+					args: undefined
 				};
-				callback = function(foo, bar, next) {
+				callback = function(foo, bar) {
 					passed.args = [foo, bar];
 					passed.scope = this;
-					setTimeout(function() {
-						passed.async = true;
-						next();
-					}, 0);
 				};
 				instance.allowHooks('test')
 					.hook($.PRE_TEST, callback);
@@ -234,7 +229,7 @@ describe('-- API --', function() {
 				}).to.throw(/qualified/);
 				done();
 			});
-			it('should return the instance', function(done){
+			it('should return the instance', function(done) {
 				var actual = instance.callHook($.PRE_TEST, foo, bar, done);
 				expect(actual).to.equal(instance);
 			});
@@ -246,12 +241,18 @@ describe('-- API --', function() {
 				instance.callHook($.PRE_TEST, [foo, bar], done);
 				expect(passed.args).to.eql([foo, bar]);
 			});
-			it('execute middleware in scope `context`', function(done) {
+			it('should pass functions as parameters to middleware', function(done) {
+				var f = function() {
+				};
+				instance.callHook($.PRE_TEST, [foo, f], done);
+				expect(passed.args).to.eql([foo, f]);
+			});
+			it('should execute middleware in scope `context`', function(done) {
 				var context = {};
 				instance.callHook(context, $.PRE_TEST, [foo, bar], done);
 				expect(passed.scope).to.equal(context);
 			});
-			it('execute middleware in scope `instance` by default', function(done) {
+			it('should execute middleware in scope `instance` by default', function(done) {
 				instance.callHook($.PRE_TEST, [foo, bar], done);
 				expect(passed.scope).to.equal(instance);
 			});
@@ -265,7 +266,7 @@ describe('-- API --', function() {
 				c2 = function() {
 				};
 			});
-			it('should return the instance', function(){
+			it('should return the instance', function() {
 				var actual = instance.unhook($.PRE_TEST);
 				expect(actual).to.equal(instance);
 			});
@@ -341,7 +342,7 @@ describe('-- API --', function() {
 				};
 				instance.test = original;
 			});
-			it('should return the instance', function(){
+			it('should return the instance', function() {
 				var actual = instance.addHooks($.PRE_TEST);
 				expect(actual).to.equal(instance);
 			});
@@ -393,6 +394,19 @@ describe('-- API --', function() {
 						done();
 					});
 			});
+			it('should allow passing a function as a parameter ', function(done){
+				var passed;
+				var f = function(){};
+				instance.test = function(fn, done){
+					passed = fn;
+					done();
+				};
+				instance.addHooks('test')
+					.test(f, function(){
+						expect(passed).to.equal(f);
+						done();
+					});
+			})
 		});
 	});
 
