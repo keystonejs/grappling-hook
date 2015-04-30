@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha tests",
     "lint": "eslint index.js tests; true",
-    "test-cov": "istanbul cover _mocha tests.js",
+    "test-cov": "istanbul cover _mocha tests",
     "travis": "npm test; npm run lint"
   },
   "repository": {
