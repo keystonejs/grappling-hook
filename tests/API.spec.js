@@ -406,7 +406,7 @@ describe('-- API --', function() {
 						expect(passed).to.equal(f);
 						done();
 					});
-			})
+			});
 		});
 	});
 

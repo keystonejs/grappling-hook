@@ -46,7 +46,7 @@ describe('-- error handling --', function() {
 				throw error;
 			});
 		});
-		it("should bubble through", function(){
+		it('should bubble through', function(){
 			expect(function(){
 				instance.callHook($.PRE_TEST);
 			}).to.throw(/middleware error/);
