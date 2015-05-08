@@ -3,16 +3,6 @@
 var _ = require('lodash');
 var async = require('async');
 
-function init(opts) {
-	this.__grappling = {
-		middleware: {},
-		hooks: [],
-		opts: _.defaults({}, opts, {
-			strict: true
-		})
-	};
-}
-
 function parseHook(hook) {
 	var parsed = (hook) ? hook.split(':') : [];
 	var n = parsed.length;
@@ -41,6 +31,32 @@ function addMiddleware(instance, hook, args) {
 	}
 	cache.middleware[hook] = mw.concat(fns);
 }
+
+function attachQualifier(instance, qualifier) {
+	instance[qualifier] = function() {
+		var args = _.toArray(arguments);
+		addMiddleware(this, qualifier + ':' + args.shift(), args);
+		return this;
+	};
+}
+
+function init(opts) {
+	this.__grappling = {
+		middleware: {},
+		hooks: [],
+		opts: _.defaults({}, opts, {
+			strict: true,
+			qualifiers: {
+				pre: 'pre',
+				post: 'post'
+			}
+		})
+	};
+	var q = this.__grappling.opts.qualifiers;
+	attachQualifier(this, q.pre);
+	attachQualifier(this, q.post);
+}
+
 
 /*
  based on code from Isaac Schlueter's blog post: 
@@ -117,50 +133,25 @@ function qualifyHook(hookObj) {
 }
 
 function createHooks(instance, config) {
+	var q = instance.__grappling.opts.qualifiers;
 	_.each(config, function(fn, hook) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
 			var args = _.toArray(arguments);
 			var n = args.length - 1;
-			var middleware = instance.getMiddleware('pre:' + hookObj.name);
+			var middleware = instance.getMiddleware(q.pre + ':' + hookObj.name);
 			var callback = _.isFunction(args[n]) ? args.pop() : /* istanbul ignore next: untestable */ null;
 			middleware.push(function(next) {
 				args.push(next);
 				fn.apply(instance, args);
 			});
-			middleware = middleware.concat(instance.getMiddleware('post:' + hookObj.name));
+			middleware = middleware.concat(instance.getMiddleware(q.post + ':' + hookObj.name));
 			dezalgo(iterateMiddleware, null, [instance, middleware, null], callback);
 		};
 	});
 }
 
 var methods = {
-	/**
-	 * Adds middleware to a pre-hook
-	 *
-	 * @param {String} action
-	 * @param {(...Function|Function[])} fn - middleware to call
-	 * @api public
-	 */
-	pre: function() {
-		var args = _.toArray(arguments);
-		addMiddleware(this, 'pre:' + args.shift(), args);
-		return this;
-	},
-
-	/**
-	 * Adds middleware to a post-hook
-	 *
-	 * @param {String} action
-	 * @param {(...Function|Function[])} fn - middleware to call
-	 * @api public
-	 */
-	post: function() {
-		var args = _.toArray(arguments);
-		addMiddleware(this, 'post:' + args.shift(), args);
-		return this;
-	},
-
 	/**
 	 * Adds middleware to a hook
 	 *
@@ -197,14 +188,15 @@ var methods = {
 		var hook = fns.shift();
 		var hookObj = parseHook(hook);
 		var middleware = this.__grappling.middleware;
+		var q = this.__grappling.opts.qualifiers;
 		if (hookObj.type || fns.length) {
 			qualifyHook(hookObj);
 			if (middleware[hook]) middleware[hook] = (fns.length ) ? _.without.apply(null, [middleware[hook]].concat(fns)) : [];
 		} else if (hookObj.name) {
 			/* istanbul ignore else: nothing _should_ happen */
-			if (middleware['pre:' + hookObj.name]) middleware['pre:' + hookObj.name] = [];
+			if (middleware[q.pre + ':' + hookObj.name]) middleware[q.pre + ':' + hookObj.name] = [];
 			/* istanbul ignore else: nothing _should_ happen */
-			if (middleware['post:' + hookObj.name]) middleware['post:' + hookObj.name] = [];
+			if (middleware[q.post + ':' + hookObj.name]) middleware[q.post + ':' + hookObj.name] = [];
 		} else {
 			_.each(middleware, function(callbacks, hook) {
 				middleware[hook] = [];
@@ -224,6 +216,7 @@ var methods = {
 	 */
 	allowHooks: function() {
 		var args = _.flatten(_.toArray(arguments));
+		var q = this.__grappling.opts.qualifiers;
 		_.each(args, function(hook) {
 			if (!_.isString(hook)) {
 				throw new Error('`allowHooks` expects (arrays of) Strings');
@@ -231,13 +224,13 @@ var methods = {
 			var hookObj = parseHook(hook);
 			var middleware = this.__grappling.middleware;
 			if (hookObj.type) {
-				if (hookObj.type !== 'pre' && hookObj.type !== 'post') {
-					throw new Error('Only "pre" and "post" types are allowed, not "' + hookObj.type + '"');
+				if (hookObj.type !== q.pre && hookObj.type !== q.post) {
+					throw new Error('Only "' + q.pre + '" and "' + q.post + '" types are allowed, not "' + hookObj.type + '"');
 				}
 				middleware[hook] = middleware[hook] || [];
 			} else {
-				middleware['pre:' + hookObj.name] = middleware['pre:' + hookObj.name] || [];
-				middleware['post:' + hookObj.name] = middleware['post:' + hookObj.name] || [];
+				middleware[q.pre + ':' + hookObj.name] = middleware[q.pre + ':' + hookObj.name] || [];
+				middleware[q.post + ':' + hookObj.name] = middleware[q.post + ':' + hookObj.name] || [];
 			}
 		}, this);
 		return this;
