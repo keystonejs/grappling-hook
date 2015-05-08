@@ -8,6 +8,8 @@
 A number of modules already exist that allow you to do just the same, but the most popular one ([hooks](https://www.npmjs.com/package/hooks)) is no longer maintained.
 Also, we wanted a more granular control of the hooking process and the way middleware is called.
 
+**NEW:** since v2.3 you can [configure `grappling-hook` to use other method names](#other-qualifiers) than `pre` or `post`, e.g. `before` and `after`.
+
 ## Installation
 
 ```sh
@@ -393,6 +395,28 @@ var instance = grappling.create({
 	strict: false
 });
 ```
+
+### Other qualifiers
+
+By default `grappling-hook` registers `pre` and `post` methods, but you can configure other names if you want:
+
+```js
+var instance = grappling.create({
+	qualifiers: {
+		pre: "before",
+		post: "after"
+	}
+});
+
+//now use `before` and `after` instead of `pre` and `post`:
+
+instance.addHooks("save");
+instance.before("save", fn);
+instance.after("save", fn);
+instance.save();
+```
+
+There's one caveat: you _have_ to configure both or none.
 
 ### Error handling
 
