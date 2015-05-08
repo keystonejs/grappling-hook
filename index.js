@@ -14,8 +14,8 @@ function init(opts) {
 }
 
 function parseHook(hook) {
-	var parsed = (hook) ? hook.split(':') : [],
-		n = parsed.length;
+	var parsed = (hook) ? hook.split(':') : [];
+	var n = parsed.length;
 	return {
 		type: parsed[n - 2],
 		name: parsed[n - 1]
@@ -31,9 +31,9 @@ function parseHook(hook) {
  * @api private
  */
 function addMiddleware(instance, hook, args) {
-	var fns = _.flatten(args),
-		cache = instance.__grappling,
-		mw = [];
+	var fns = _.flatten(args);
+	var cache = instance.__grappling;
+	var mw = [];
 	if (!cache.middleware[hook]) {
 		if (cache.opts.strict) throw new Error('Hooks for ' + hook + ' are not supported.');
 	} else {
@@ -120,10 +120,10 @@ function createHooks(instance, config) {
 	_.each(config, function(fn, hook) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
-			var args = _.toArray(arguments),
-				n = args.length - 1,
-				middleware = instance.getMiddleware('pre:' + hookObj.name),
-				callback = _.isFunction(args[n]) ? args.pop() : /* istanbul ignore next: untestable */ null;
+			var args = _.toArray(arguments);
+			var n = args.length - 1;
+			var middleware = instance.getMiddleware('pre:' + hookObj.name);
+			var callback = _.isFunction(args[n]) ? args.pop() : /* istanbul ignore next: untestable */ null;
 			middleware.push(function(next) {
 				args.push(next);
 				fn.apply(instance, args);
@@ -193,10 +193,10 @@ var methods = {
 	 * @param {(...Function|Function[])} [fn] - function(s) to be removed
 	 */
 	unhook: function() {
-		var fns = _.toArray(arguments),
-			hook = fns.shift(),
-			hookObj = parseHook(hook),
-			middleware = this.__grappling.middleware;
+		var fns = _.toArray(arguments);
+		var hook = fns.shift();
+		var hookObj = parseHook(hook);
+		var middleware = this.__grappling.middleware;
 		if (hookObj.type || fns.length) {
 			qualifyHook(hookObj);
 			if (middleware[hook]) middleware[hook] = (fns.length ) ? _.without.apply(null, [middleware[hook]].concat(fns)) : [];
@@ -228,8 +228,8 @@ var methods = {
 			if (!_.isString(hook)) {
 				throw new Error('`allowHooks` expects (arrays of) Strings');
 			}
-			var hookObj = parseHook(hook),
-				middleware = this.__grappling.middleware;
+			var hookObj = parseHook(hook);
+			var middleware = this.__grappling.middleware;
 			if (hookObj.type) {
 				if (hookObj.type !== 'pre' && hookObj.type !== 'post') {
 					throw new Error('Only "pre" and "post" types are allowed, not "' + hookObj.type + '"');
@@ -259,12 +259,12 @@ var methods = {
 	 * @param {(...String|String[]|...Object|Object[])} method - method(s) that need(s) to emit `pre` and `post` events
 	 */
 	addHooks: function() {
-		var args = _.flatten(_.toArray(arguments)),
-			config = {};
+		var args = _.flatten(_.toArray(arguments));
+		var config = {};
 		_.each(args, function(mixed) {
 			if (_.isString(mixed)) {
-				var hookObj = parseHook(mixed),
-					fn = this[hookObj.name];
+				var hookObj = parseHook(mixed);
+				var fn = this[hookObj.name];
 				if (!fn) throw new Error('Cannot add hooks to undeclared method:"' + hookObj.name + '"'); //non-existing method
 				config[mixed] = fn;
 			} else if (_.isObject(mixed)) {
@@ -286,8 +286,8 @@ var methods = {
 	 * @param {Function} [callback] - will be called when all middleware have finished
 	 */
 	callHook: function(context, hook) {
-		var args = _.toArray(arguments),
-			done;
+		var args = _.toArray(arguments);
+		var done;
 		if (_.isString(context)) {
 			hook = context;
 			context = this;
