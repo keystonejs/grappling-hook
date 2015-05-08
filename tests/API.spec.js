@@ -73,10 +73,15 @@ describe('-- API --', function() {
 			beforeEach(function() {
 				hook = sinon.spy();
 			});
-			it('should throw an error for anything else but `pre` or `post`', function() {
+			it('should throw an error for anything other qualifiers but `pre` or `post`', function() {
 				expect(function() {
 					instance.allowHooks('nope:not valid!');
 				}).to.throw(/pre|post/);
+			});
+			it('should throw an error for anything else but a valid hook', function() {
+				expect(function() {
+					instance.allowHooks(9);
+				}).to.throw(/string/i);
 			});
 			it('should return the instance', function() {
 				var actual = instance.allowHooks($.PRE_TEST);
@@ -345,6 +350,11 @@ describe('-- API --', function() {
 			it('should return the instance', function() {
 				var actual = instance.addHooks($.PRE_TEST);
 				expect(actual).to.equal(instance);
+			});
+			it('should throw an error if the parameters are not a string or object', function() {
+				expect(function() {
+					instance.addHooks(666);
+				}).to.throw(/string|object/i);
 			});
 			it('should add a qualified hook to an existing method', function(done) {
 				instance.addHooks($.PRE_TEST)

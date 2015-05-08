@@ -43,19 +43,19 @@ function addMiddleware(instance, hook, args) {
 }
 
 /*
-	based on code from Isaac Schlueter's blog post: 
-	http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony
+ based on code from Isaac Schlueter's blog post: 
+ http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony
  */
-function dezalgo(callback, context, args, next, done){
+function dezalgo(callback, context, args, next, done) {
 	var isSync = true;
 	callback.apply(context, args.concat(safeNext, done)); //eslint-disable-line no-use-before-define
 	isSync = false;
-	function safeNext(err){
-		if(isSync){
-			process.nextTick(function(){
+	function safeNext(err) {
+		if (isSync) {
+			process.nextTick(function() {
 				next(err);
 			});
-		}else{
+		} else {
 			next(err);
 		}
 	}
@@ -63,7 +63,7 @@ function dezalgo(callback, context, args, next, done){
 
 function iterateMiddleware(context, middleware, args, done) {
 	args = args || [];
-	done = done || function(err) {
+	done = done || /* istanbul ignore next: untestable */ function(err) {
 			if (err) {
 				throw err;
 			}
@@ -123,7 +123,7 @@ function createHooks(instance, config) {
 			var args = _.toArray(arguments),
 				n = args.length - 1,
 				middleware = instance.getMiddleware('pre:' + hookObj.name),
-				callback = _.isFunction(args[n]) ? args.pop() : undefined;
+				callback = _.isFunction(args[n]) ? args.pop() : /* istanbul ignore next: untestable */ null;
 			middleware.push(function(next) {
 				args.push(next);
 				fn.apply(instance, args);
@@ -201,7 +201,9 @@ var methods = {
 			qualifyHook(hookObj);
 			if (middleware[hook]) middleware[hook] = (fns.length ) ? _.without.apply(null, [middleware[hook]].concat(fns)) : [];
 		} else if (hookObj.name) {
+			/* istanbul ignore else: nothing _should_ happen */
 			if (middleware['pre:' + hookObj.name]) middleware['pre:' + hookObj.name] = [];
+			/* istanbul ignore else: nothing _should_ happen */
 			if (middleware['post:' + hookObj.name]) middleware['post:' + hookObj.name] = [];
 		} else {
 			_.each(middleware, function(callbacks, hook) {
@@ -223,6 +225,9 @@ var methods = {
 	allowHooks: function() {
 		var args = _.flatten(_.toArray(arguments));
 		_.each(args, function(hook) {
+			if (!_.isString(hook)) {
+				throw new Error('`allowHooks` expects (arrays of) Strings');
+			}
 			var hookObj = parseHook(hook),
 				middleware = this.__grappling.middleware;
 			if (hookObj.type) {
@@ -230,7 +235,7 @@ var methods = {
 					throw new Error('Only "pre" and "post" types are allowed, not "' + hookObj.type + '"');
 				}
 				middleware[hook] = middleware[hook] || [];
-			} else if (hookObj.name) {
+			} else {
 				middleware['pre:' + hookObj.name] = middleware['pre:' + hookObj.name] || [];
 				middleware['post:' + hookObj.name] = middleware['post:' + hookObj.name] || [];
 			}
@@ -264,7 +269,9 @@ var methods = {
 				config[mixed] = fn;
 			} else if (_.isObject(mixed)) {
 				_.defaults(config, mixed);
-			}// todo: else throw?
+			} else {
+				throw new Error('`addHooks` expects (arrays of) Strings or Objects');
+			}
 		}, this);
 		this.allowHooks(_.keys(config));
 		createHooks(this, config);
@@ -304,7 +311,7 @@ var methods = {
 	getMiddleware: function(hook) {
 		qualifyHook(parseHook(hook));
 		var middleware = this.__grappling.middleware[hook];
-		if(middleware){
+		if (middleware) {
 			return middleware.slice(0);
 		}
 		return [];
