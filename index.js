@@ -311,14 +311,20 @@ var methods = {
 	 * @param {...*} [parameters] - any parameters you wish to pass to the middleware.
 	 * @param {Function} [callback] - will be called when all middleware have finished
 	 */
-	callHook: function(context, hook) {
+	callHook: function() {
 		var params = parseCallHookParams(this, _.toArray(arguments));
 		params.done = (_.isFunction(params.args[params.args.length - 1])) ? params.args.pop() : null;
 		dezalgo(iterateAsyncMiddleware, null, [params.context, this.getMiddleware(params.hook), params.args], params.done);
 		return this;
 	},
 
-	callSyncHook: function(context, hook) {
+	/**
+	 * Calls all middleware subscribed to the `hook` and passes remaining parameters to them
+	 * @param {*} [context] - the context in which the middleware will be called
+	 * @param {String} hook - qualified hook e.g. `pre:save`
+	 * @param {...*} [parameters] - any parameters you wish to pass to the middleware.
+	 */
+	callSyncHook: function() {
 		var params = parseCallHookParams(this, _.toArray(arguments));
 		iterateSyncMiddleware(params.context, this.getMiddleware(params.hook), params.args);
 		return this;
