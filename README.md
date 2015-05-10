@@ -8,7 +8,10 @@
 A number of modules already exist that allow you to do just the same, but the most popular one ([hooks](https://www.npmjs.com/package/hooks)) is no longer maintained.
 Also, we wanted a more granular control of the hooking process and the way middleware is called.
 
-**NEW:** since v2.3 you can [configure `grappling-hook` to use other method names](#other-qualifiers) than `pre` or `post`, e.g. `before` and `after`.
+**NEW:**
+ 
+* since v2.4 you can [wrap sync methods](#adding-hooks-to-synchronized-methods) and [call sync hooks](#synchronized-hooks).
+* since v2.3 you can [configure `grappling-hook` to use other method names](#other-qualifiers) than `pre` or `post`, e.g. `before` and `after`.
 
 ## Installation
 
@@ -120,6 +123,44 @@ All of this is pretty standard stuff, there's two things to note here though:
 
 1. By default you _have_ to be explicit about which methods you want to make hookable. (There's a more _lenient_ mode as well though)
 1. Middleware doesn't have to accept a `next` callback, i.e. you can use sync functions as middleware too, as in the examples above.
+
+#### Adding hooks to synchronized methods
+
+`addSyncHooks` allows you to register methods for enforced synchronized middleware execution (`addHooks` allows mixing of both and will _always_ finish async):
+
+```js
+var grappling = require('grappling-hook');
+
+var instance = {
+	saveSync : function(filename){
+		filename = Date.now() + "-" + filename; 
+		console.log('save', filename);
+		return filename;
+	}
+};
+
+grappling.mixin(instance); // add grappling-hook functionality to an existing object
+
+instance.addSyncHooks('saveSync'); // setup hooking for an existing (sync) method
+
+instance.pre('saveSync', function(){
+	console.log('saving!');
+}).post('saveSync', function(){
+	console.log('saved!');
+});
+
+var newName = instance.saveSync("example.txt");
+console.log('new name:', newName);
+```
+```sh
+# output:
+saving!
+save 1431264587725-example.txt
+saved!
+new name: 1431264587725-example.txt
+```
+
+Middleware registered with synchronized hook will **NOT** receive `next` nor `done` callbacks, i.e. async serial or parallel middleware registration is not possible.
 
 ### Adding middleware
 
@@ -370,6 +411,28 @@ function callHook([context], qualifiedHook, [...params[]], [callback])
 // e.g.
 this.callHook(delegate, 'pre:save', "foo", "bar", {baz: qux}, this.save);
 ```
+
+### Synchronized hooks
+
+I you want to enforce a synchronized execution of hook middleware you can use `callSyncHook`.
+
+```js
+instance.pre('saveSync', function syncMiddleware(foo, bar){
+	console.log("middleware", foo, bar);
+});
+
+console.log('before callSyncHook');
+instance.callSyncHook('pre:saveSync', 'foo', 'bar');
+console.log('after callSyncHook');
+```
+```
+# output:
+before callSyncHook
+middleware foo bar
+after callSyncHook
+```
+
+`callSyncHook` does **NOT** provide `next` nor `done` callbacks to the middleware, neither does it allow passing a "final" callback to the method itself.
 
 ### Middleware introspection
 
