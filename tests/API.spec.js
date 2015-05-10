@@ -263,6 +263,58 @@ describe('-- API --', function() {
 			});
 			//see sequencing.spec for callback handling in `callHook(hookName, callback)`
 		});
+		
+		describe('#callSyncHook', function() {
+			var callback,
+				passed,
+				foo = {},
+				bar = {};
+			beforeEach(function() {
+				passed = {
+					scope: undefined,
+					args: undefined
+				};
+				callback = function(foo, bar) {
+					passed.args = [foo, bar];
+					passed.scope = this;
+				};
+				instance.allowHooks('test')
+					.hook($.PRE_TEST, callback);
+			});
+			it('should throw an error for an unqualified hook', function() {
+				expect(function() {
+					instance.callSyncHook('test');
+				}).to.throw(/qualified/);
+			});
+			it('should return the instance', function() {
+				var actual = instance.callSyncHook($.PRE_TEST, foo, bar);
+				expect(actual).to.equal(instance);
+			});
+			it('should pass `...parameters` to middleware', function() {
+				instance.callSyncHook($.PRE_TEST, foo, bar);
+				expect(passed.args).to.eql([foo, bar]);
+			});
+			it('should pass `parameters[]` to middleware', function() {
+				instance.callSyncHook($.PRE_TEST, [foo, bar]);
+				expect(passed.args).to.eql([foo, bar]);
+			});
+			it('should pass functions as parameters to middleware', function() {
+				var f = function() {
+				};
+				instance.callSyncHook($.PRE_TEST, [foo, f]);
+				expect(passed.args).to.eql([foo, f]);
+			});
+			it('should execute middleware in scope `context`', function() {
+				var context = {};
+				instance.callHook(context, $.PRE_TEST, [foo, bar]);
+				expect(passed.scope).to.equal(context);
+			});
+			it('should execute middleware in scope `instance` by default', function() {
+				instance.callHook($.PRE_TEST, [foo, bar]);
+				expect(passed.scope).to.equal(instance);
+			});
+		});
+		
 		describe('#unhook', function() {
 			var c1, c2;
 			beforeEach(function() {
@@ -416,6 +468,84 @@ describe('-- API --', function() {
 						expect(passed).to.equal(f);
 						done();
 					});
+			});
+		});
+		describe('#addSyncHooks', function() {
+			var pre,
+				original,
+				post,
+				called;
+			beforeEach(function() {
+				called = [];
+				pre = function() {
+					called.push('pre');
+				};
+				original = function(foo) {
+					called.push('original');
+					return foo;
+				};
+				post = function() {
+					called.push('post');
+				};
+				instance.test = original;
+			});
+			it('should return the instance', function() {
+				var actual = instance.addSyncHooks($.PRE_TEST);
+				expect(actual).to.equal(instance);
+			});
+			it('should throw an error if the parameters are not a string or object', function() {
+				expect(function() {
+					instance.addSyncHooks(666);
+				}).to.throw(/string|object/i);
+			});
+			it('should add a qualified hook to an existing method', function() {
+				instance.addSyncHooks($.PRE_TEST)
+					.hook($.PRE_TEST, pre)
+					.test('foo');
+				expect(called).to.eql(['pre', 'original']);
+			});
+			it('should add all qualified hooks to an existing method', function() {
+				instance.addSyncHooks($.PRE_TEST, $.POST_TEST)
+					.pre('test', pre)
+					.post('test', post)
+					.test('foo');
+				expect(called).to.eql(['pre', 'original', 'post']);
+			});
+			it('should add pre and post for unqualified hooks to an existing method', function() {
+				instance.addSyncHooks('test')
+					.pre('test', pre)
+					.post('test', post)
+					.test('foo');
+				expect(called).to.eql(['pre', 'original', 'post']);
+			});
+			it('should throw an error if the method doesn\'t exist', function() {
+				expect(function() {
+					instance.addSyncHooks('nonexistant');
+				}).to.throw(/undeclared method/);
+			});
+			it('should create a method for a qualified hook', function() {
+				instance.addSyncHooks({'pre:method': original})
+					.hook('pre:method', pre)
+					.method('foo');
+				expect(called).to.eql(['pre', 'original']);
+			});
+			it('should allow passing a function as a parameter ', function(){
+				var passed;
+				var f = function(){};
+				instance.test = function(fn){
+					passed = fn;
+				};
+				instance.addSyncHooks('test')
+					.test(f);
+				expect(passed).to.equal(f);
+			});
+			it('should allow returning a value', function(){
+				instance.test = function(foo){
+					return foo;
+				};
+				instance.addSyncHooks('test');
+				var actual = instance.test('foo');
+				expect(actual).to.equal('foo');
 			});
 		});
 	});

@@ -57,7 +57,6 @@ function init(opts) {
 	attachQualifier(this, q.post);
 }
 
-
 /*
  based on code from Isaac Schlueter's blog post: 
  http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony
@@ -77,7 +76,7 @@ function dezalgo(callback, context, args, next, done) {
 	}
 }
 
-function iterateMiddleware(context, middleware, args, done) {
+function iterateAsyncMiddleware(context, middleware, args, done) {
 	args = args || [];
 	done = done || /* istanbul ignore next: untestable */ function(err) {
 			if (err) {
@@ -119,6 +118,12 @@ function iterateMiddleware(context, middleware, args, done) {
 	});
 }
 
+function iterateSyncMiddleware(context, middleware, args) {
+	_.each(middleware, function(callback) {
+		callback.apply(context, args);
+	});
+}
+
 /**
  *
  * @param hookObj
@@ -132,23 +137,55 @@ function qualifyHook(hookObj) {
 	return hookObj;
 }
 
-function createHooks(instance, config) {
+function createHooks(instance, config, opts) {
 	var q = instance.__grappling.opts.qualifiers;
 	_.each(config, function(fn, hook) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
+			var result;
 			var args = _.toArray(arguments);
 			var n = args.length - 1;
 			var middleware = instance.getMiddleware(q.pre + ':' + hookObj.name);
-			var callback = _.isFunction(args[n]) ? args.pop() : /* istanbul ignore next: untestable */ null;
+			var callback = (opts.allowAsync && _.isFunction(args[n])) ? args.pop() : /* istanbul ignore next: untestable */ null;
 			middleware.push(function(next) {
 				args.push(next);
-				fn.apply(instance, args);
+				result = fn.apply(instance, args);
 			});
 			middleware = middleware.concat(instance.getMiddleware(q.post + ':' + hookObj.name));
-			dezalgo(iterateMiddleware, null, [instance, middleware, null], callback);
+			if (opts.allowAsync) {
+				dezalgo(iterateAsyncMiddleware, null, [instance, middleware, null], callback);
+			} else {
+				iterateSyncMiddleware(instance, middleware, args);
+			}
+			return result;
 		};
 	});
+}
+
+function addHooks(instance, args) {
+	var config = {};
+	_.each(args, function(mixed) {
+		if (_.isString(mixed)) {
+			var hookObj = parseHook(mixed);
+			var fn = instance[hookObj.name];
+			if (!fn) throw new Error('Cannot add hooks to undeclared method:"' + hookObj.name + '"'); //non-existing method
+			config[mixed] = fn;
+		} else if (_.isObject(mixed)) {
+			_.defaults(config, mixed);
+		} else {
+			throw new Error('`addHooks` expects (arrays of) Strings or Objects');
+		}
+	}, instance);
+	instance.allowHooks(_.keys(config));
+	return config;
+}
+
+function parseCallHookParams(instance, args) {
+	return {
+		context: (_.isString(args[0])) ? instance : args.shift(),
+		hook: args.shift(),
+		args: _.flatten(args)
+	};
 }
 
 var methods = {
@@ -252,22 +289,18 @@ var methods = {
 	 * @param {(...String|String[]|...Object|Object[])} method - method(s) that need(s) to emit `pre` and `post` events
 	 */
 	addHooks: function() {
-		var args = _.flatten(_.toArray(arguments));
-		var config = {};
-		_.each(args, function(mixed) {
-			if (_.isString(mixed)) {
-				var hookObj = parseHook(mixed);
-				var fn = this[hookObj.name];
-				if (!fn) throw new Error('Cannot add hooks to undeclared method:"' + hookObj.name + '"'); //non-existing method
-				config[mixed] = fn;
-			} else if (_.isObject(mixed)) {
-				_.defaults(config, mixed);
-			} else {
-				throw new Error('`addHooks` expects (arrays of) Strings or Objects');
-			}
-		}, this);
-		this.allowHooks(_.keys(config));
-		createHooks(this, config);
+		var config = addHooks(this, _.flatten(_.toArray(arguments)));
+		createHooks(this, config, {
+			allowAsync: true
+		});
+		return this;
+	},
+
+	addSyncHooks: function() {
+		var config = addHooks(this, _.flatten(_.toArray(arguments)));
+		createHooks(this, config, {
+			allowAsync: false
+		});
 		return this;
 	},
 
@@ -279,20 +312,15 @@ var methods = {
 	 * @param {Function} [callback] - will be called when all middleware have finished
 	 */
 	callHook: function(context, hook) {
-		var args = _.toArray(arguments);
-		var done;
-		if (_.isString(context)) {
-			hook = context;
-			context = this;
-		} else {
-			args.shift(); //drop `context`
-		}
-		args.shift();//drop `hook`
-		if (_.isFunction(args[args.length - 1])) {
-			done = args.pop(); //drop callback
-		}
-		args = _.flatten(args);// in case parameters were passed in as an array; this is 2-dim, we need 1-dim
-		dezalgo(iterateMiddleware, null, [context, this.getMiddleware(hook), args], done);
+		var params = parseCallHookParams(this, _.toArray(arguments));
+		params.done = (_.isFunction(params.args[params.args.length - 1])) ? params.args.pop() : null;
+		dezalgo(iterateAsyncMiddleware, null, [params.context, this.getMiddleware(params.hook), params.args], params.done);
+		return this;
+	},
+
+	callSyncHook: function(context, hook) {
+		var params = parseCallHookParams(this, _.toArray(arguments));
+		iterateSyncMiddleware(params.context, this.getMiddleware(params.hook), params.args);
 		return this;
 	},
 
