@@ -1,6 +1,7 @@
 # grappling-hook
 [![Build Status](https://travis-ci.org/keystonejs/grappling-hook.svg)](https://travis-ci.org/keystonejs/grappling-hook)
 [![npm version](https://badge.fury.io/js/grappling-hook.svg)](http://npmjs.org/packages/grappling-hook)
+[![Coverage Status](https://coveralls.io/repos/keystonejs/grappling-hook/badge.svg?branch=master)](https://coveralls.io/r/keystonejs/grappling-hook?branch=master)
 
 >pre/post hooking enabler 
 
