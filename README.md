@@ -35,7 +35,7 @@ var instance = grappling.create(); // create an instance
 instance.addHooks({ // declare the hookable methods
 	save: function(done){
 		console.log('save!');
-		!done && done();
+		done();
 	}
 });
 
@@ -45,12 +45,16 @@ instance.pre('save', function(){ //allow middleware to be registered for a hook
 	console.log('saved!');
 });
 
+instance.save(function(err){
+  console.log('All done!!');
+});
 ```
 ```sh
 # output:
 saving!
 save!
 saved!
+All done!
 ```
 
 #### Using an existing object
