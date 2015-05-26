@@ -46,6 +46,10 @@ var async = require('async');
 
 var presets = {};
 
+function isThenable(subject) {
+	return subject && subject.then;
+}
+
 function parseHook(hook) {
 	var parsed = (hook) ? hook.split(':') : [];
 	var n = parsed.length;
@@ -184,12 +188,21 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 			default :
 				//synced
 				var err;
+				var result;
 				try {
-					callback.apply(context, args);
+					result = callback.apply(context, args);
 				} catch (e) {
 					err = e;
 				}
-				next(err);
+				if (!err && isThenable(result)) {
+					//promise
+					result.then(function() {
+						next();
+					}, next);
+				} else {
+					//synced
+					next(err);
+				}
 		}
 	}, function(err) {
 		asyncFinished = (err) ? done : true;
@@ -257,13 +270,47 @@ function createSyncHooks(instance, config) {
 			var args = _.toArray(arguments);
 			var middleware = instance.getMiddleware(q.pre + ':' + hookObj.name);
 			var result;
-			var callOriginal = function() {
+			middleware.push(function() {
 				result = fn.apply(instance, args);
-			};
-			middleware.push(callOriginal);
+			});
 			middleware = middleware.concat(instance.getMiddleware(q.post + ':' + hookObj.name));
 			iterateSyncMiddleware(instance, middleware, args);
 			return result;
+		};
+	});
+}
+
+function createPromisedHooks(instance, config) {
+	var opts = instance.__grappling.opts;
+	if (!opts.createPromise || !_.isFunction(opts.createPromise)) {
+		throw new Error('Instance not set up for promise creation, please set `opts.createPromise`');
+	}
+	_.each(config, function(fn, hook) {
+		var hookObj = parseHook(hook);
+		instance[hookObj.name] = function() {
+			var args = _.toArray(arguments);
+			var middleware = instance.getMiddleware(opts.qualifiers.pre + ':' + hookObj.name);
+			var deferred = {};
+			var promise = opts.createPromise(function(resolve, reject) {
+				deferred.resolve = resolve;
+				deferred.reject = reject;
+			});
+			middleware.push(function(next) {
+				fn.apply(instance, args).then(function(result) {
+					deferred.result = result;
+					next();
+				}, next);
+			});
+			middleware = middleware.concat(instance.getMiddleware(opts.qualifiers.post + ':' + hookObj.name));
+			dezalgofy(function(safeDone) {
+				iterateAsyncMiddleware(instance, middleware, args, safeDone);
+			}, function(err) {
+				if (err) {
+					return deferred.reject(err);
+				}
+				return deferred.resolve(deferred.result);
+			});
+			return promise;
 		};
 	});
 }
@@ -441,6 +488,12 @@ var methods = {
 		return this;
 	},
 
+	addPromisedHook: function() {
+		var config = addHooks(this, _.flatten(_.toArray(arguments)));
+		createPromisedHooks(this, config);
+		return this;
+	},
+
 	/**
 	 * Calls all middleware subscribed to the asynchronous `qualifiedHook` and passes remaining parameters to them
 	 * @instance
@@ -473,6 +526,24 @@ var methods = {
 		var params = parseCallHookParams(this, _.toArray(arguments));
 		iterateSyncMiddleware(params.context, this.getMiddleware(params.hook), params.args);
 		return this;
+	},
+
+	callPromisedHook: function() {
+		var params = parseCallHookParams(this, _.toArray(arguments));
+		var deferred = {};
+		var promise = this.__grappling.opts.createPromise(function(resolve, reject) {
+			deferred.resolve = resolve;
+			deferred.reject = reject;
+		});
+		dezalgofy(function(safeDone) {
+			iterateAsyncMiddleware(params.context, this.getMiddleware(params.hook), params.args, safeDone);
+		}, function(err) {
+			if (err) {
+				return deferred.reject(err);
+			}
+			return deferred.resolve();
+		});
+		return promise;
 	},
 
 	/**

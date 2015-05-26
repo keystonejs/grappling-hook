@@ -33,6 +33,7 @@
     "lodash": "^3.9.3"
   },
   "devDependencies": {
+    "bluebird": "^2.9.25",
     "coveralls": "^2.11.2",
     "eslint": "^0.23.0",
     "istanbul": "^0.3.15",
