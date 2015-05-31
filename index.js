@@ -77,7 +77,6 @@ function dezalgo(callback, context, args, next, done) {
 }
 
 function iterateAsyncMiddleware(context, middleware, args, done) {
-	args = args || [];
 	done = done || /* istanbul ignore next: untestable */ function(err) {
 			if (err) {
 				throw err;
