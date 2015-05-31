@@ -136,28 +136,52 @@ function qualifyHook(hookObj) {
 	return hookObj;
 }
 
-function createHooks(instance, config, opts) {
+function createHooks(instance, config) {
 	var q = instance.__grappling.opts.qualifiers;
 	_.each(config, function(fn, hook) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
-			var result;
+			var args = _.toArray(arguments);
+			var n = args.length - 1;
+			if (!_.isFunction(args[n])) {
+				throw new Error('ASync methods should receive a callback as a final parameter');
+			}
+			var middleware = instance.getMiddleware(q.pre + ':' + hookObj.name);
+			var post = instance.getMiddleware(q.post + ':' + hookObj.name);
+			var callback = args[n];
+			if (post.length) {
+				var callOriginal = function() {
+					var args = _.toArray(arguments);
+					fn.apply(instance, args);
+				};
+				callOriginal.isAsync = true;
+				middleware.push(callOriginal);
+				middleware = middleware.concat(post);
+			} else {
+				callback = function() {
+					fn.apply(instance, args);
+				}
+			}
+			dezalgo(iterateAsyncMiddleware, null, [instance, middleware, args.slice(0, n)], callback);
+		};
+	});
+}
+
+function createSyncHooks(instance, config) {
+	var q = instance.__grappling.opts.qualifiers;
+	_.each(config, function(fn, hook) {
+		var hookObj = parseHook(hook);
+		instance[hookObj.name] = function() {
 			var args = _.toArray(arguments);
 			var n = args.length - 1;
 			var middleware = instance.getMiddleware(q.pre + ':' + hookObj.name);
-			var callback = (opts.allowAsync && _.isFunction(args[n])) ? args.pop() : /* istanbul ignore next: untestable */ null;
-			var f = function() {
-				var args = _.toArray(arguments);
+			var result;
+			var callOriginal = function() {
 				result = fn.apply(instance, args);
 			};
-			f.isAsync = true;
-			middleware.push(f);
+			middleware.push(callOriginal);
 			middleware = middleware.concat(instance.getMiddleware(q.post + ':' + hookObj.name));
-			if (opts.allowAsync) {
-				dezalgo(iterateAsyncMiddleware, null, [instance, middleware, args], callback);
-			} else {
-				iterateSyncMiddleware(instance, middleware, args);
-			}
+			iterateAsyncMiddleware(instance, middleware, args);
 			return result;
 		};
 	});
@@ -291,17 +315,13 @@ var methods = {
 	 */
 	addHooks: function() {
 		var config = addHooks(this, _.flatten(_.toArray(arguments)));
-		createHooks(this, config, {
-			allowAsync: true
-		});
+		createHooks(this, config);
 		return this;
 	},
 
 	addSyncHooks: function() {
 		var config = addHooks(this, _.flatten(_.toArray(arguments)));
-		createHooks(this, config, {
-			allowAsync: false
-		});
+		createSyncHooks(this, config);
 		return this;
 	},
 
