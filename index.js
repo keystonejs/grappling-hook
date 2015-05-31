@@ -97,7 +97,7 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 		};
 	};
 	async.eachSeries(middleware, function(callback, next) {
-		var d = callback.length - args.length;
+		var d = (callback.isAsync) ? 1 : callback.length - args.length;
 		switch (d) {
 			case 1: //async series
 				dezalgo(callback, context, args, next);
@@ -147,13 +147,15 @@ function createHooks(instance, config, opts) {
 			var n = args.length - 1;
 			var middleware = instance.getMiddleware(q.pre + ':' + hookObj.name);
 			var callback = (opts.allowAsync && _.isFunction(args[n])) ? args.pop() : /* istanbul ignore next: untestable */ null;
-			middleware.push(function(next) {
-				args.push(next);
+			var f = function() {
+				var args = _.toArray(arguments);
 				result = fn.apply(instance, args);
-			});
+			};
+			f.isAsync = true;
+			middleware.push(f);
 			middleware = middleware.concat(instance.getMiddleware(q.post + ':' + hookObj.name));
 			if (opts.allowAsync) {
-				dezalgo(iterateAsyncMiddleware, null, [instance, middleware, null], callback);
+				dezalgo(iterateAsyncMiddleware, null, [instance, middleware, args], callback);
 			} else {
 				iterateSyncMiddleware(instance, middleware, args);
 			}
