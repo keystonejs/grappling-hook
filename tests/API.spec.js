@@ -469,6 +469,16 @@ describe('-- API --', function() {
 						done();
 					});
 			});
+			it('should enforce passing a callback to the wrapped method', function(done){
+				instance.test = function(done){
+					done();
+				};
+				instance.addHooks('test');
+				expect(function() {
+					instance.test();
+				}).to.throw(/callback/);
+				done();
+			});
 		});
 		describe('#addSyncHooks', function() {
 			var pre,
