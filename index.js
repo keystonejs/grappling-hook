@@ -144,7 +144,7 @@ function createHooks(instance, config) {
 			var args = _.toArray(arguments);
 			var n = args.length - 1;
 			if (!_.isFunction(args[n])) {
-				throw new Error('ASync methods should receive a callback as a final parameter');
+				throw new Error('Async methods should receive a callback as a final parameter');
 			}
 			var middleware = instance.getMiddleware(q.pre + ':' + hookObj.name);
 			var post = instance.getMiddleware(q.post + ':' + hookObj.name);
