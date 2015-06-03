@@ -5,7 +5,7 @@ var expect = require('must');
 var subject = require('../index');
 var $ = require('./fixtures');
 var console;
-var Date;
+var Date; //eslint-disable-line no-native-reassign
 describe('-- examples --', function() {
 	describe('spec file', function() {
 		it('should be found', function() {
@@ -14,7 +14,7 @@ describe('-- examples --', function() {
 	});
 	beforeEach(function() {
 		console = $.console();
-		Date = $.date(0);
+		Date = $.date(0); //eslint-disable-line no-native-reassign
 	});
 	describe('https://github.com/keystonejs/grappling-hook#creating-a-grappling-hook-object', function() {
 		var grappling = subject;
@@ -39,7 +39,7 @@ describe('-- examples --', function() {
 					console.log('saved!');
 				});
 
-				instance.save(function(err) {
+				instance.save(function() {
 					console.log('All done!!');
 					expectations();
 				});
@@ -71,7 +71,7 @@ describe('-- examples --', function() {
 					console.log('saved!');
 				});
 
-				instance.save(function(err) {
+				instance.save(function() {
 					console.log('All done!!');
 					expectations();
 				});
@@ -104,7 +104,7 @@ describe('-- examples --', function() {
 					console.log('saved!');
 				});
 
-				instance.save(function(err) {
+				instance.save(function() {
 					console.log('All done!!');
 					expectations();
 				});
@@ -317,18 +317,18 @@ describe('-- examples --', function() {
 			var instance = grappling.create();
 			instance.allowHooks('pre:save');
 			var expectations = function expectations() {
-				expect(console.logs).to.eql(['middleware',"We're finished!"]);
+				expect(console.logs).to.eql(['middleware', "We're finished!"]);
 				done();
 			};
 			(function() {
-				instance.pre('save', function asyncMiddleware(next){
-					setTimeout(function(){
+				instance.pre('save', function asyncMiddleware(next) {
+					setTimeout(function() {
 						console.log('middleware');
 						next();
 					}, 100);
 				});
-				
-				instance.callHook('pre:save', function(){
+
+				instance.callHook('pre:save', function() {
 					console.log("We're finished!");
 					expectations();
 				});
@@ -341,14 +341,14 @@ describe('-- examples --', function() {
 			var instance = grappling.create();
 			instance.allowHooks('pre:saveSync');
 			var expectations = function expectations() {
-				expect(console.logs).to.eql(['before callSyncHook','middleware foo bar','after callSyncHook']);
+				expect(console.logs).to.eql(['before callSyncHook', 'middleware foo bar', 'after callSyncHook']);
 				done();
 			};
 			(function() {
-				instance.pre('saveSync', function syncMiddleware(foo, bar){
+				instance.pre('saveSync', function syncMiddleware(foo, bar) {
 					console.log('middleware', foo, bar);
 				});
-				
+
 				console.log('before callSyncHook');
 				instance.callSyncHook('pre:saveSync', 'foo', 'bar');
 				console.log('after callSyncHook');
@@ -363,11 +363,11 @@ describe('-- examples --', function() {
 			var instance = grappling.create();
 			instance.allowHooks('pre:save');
 			expect(function() {
-				instance.pre('save', function(){
+				instance.pre('save', function() {
 					throw new Error('Oh noes!');
 				});
-				instance.callHook('pre:save', function(err){
-					if(err){
+				instance.callHook('pre:save', function(err) {
+					if (err) {
 						console.log('An error occurred:', err); // <--- will not be called
 					}
 				});
@@ -385,11 +385,11 @@ describe('-- examples --', function() {
 			};
 			(function() {
 				//async serial
-				instance.pre('save', function(next){
-					next(new Error("Oh noes!"));
+				instance.pre('save', function(next) {
+					next(new Error('Oh noes!'));
 				});
-				instance.callHook('pre:save', function(err){
-					if(err){
+				instance.callHook('pre:save', function(err) {
+					if (err) {
 						console.log('An error occurred:', err);
 					}
 					expectations();
@@ -408,12 +408,12 @@ describe('-- examples --', function() {
 			};
 			(function() {
 				//async parallel
-				instance.pre('save', function(next, done){
+				instance.pre('save', function(next, done) {
 					next();
-					done(new Error("Oh noes!"));
+					done(new Error('Oh noes!'));
 				});
-				instance.callHook('pre:save', function(err){
-					if(err){
+				instance.callHook('pre:save', function(err) {
+					if (err) {
 						console.log('An error occurred:', err);
 					}
 					expectations();

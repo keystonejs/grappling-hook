@@ -6,7 +6,7 @@ function Console(){
 }
 
 Console.prototype.log = function(){
-	this.logs.push(_.toArray(arguments).join(" "));	
+	this.logs.push(_.toArray(arguments).join( ' ' ));	
 };
 module.exports = function(){
 	return new Console();

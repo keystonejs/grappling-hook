@@ -5,6 +5,6 @@ module.exports = function(value){
 		now: function(){
 			return value;
 		}
-	}
+	};
 };
 

@@ -160,7 +160,7 @@ function createHooks(instance, config) {
 			} else {
 				callback = function() {
 					fn.apply(instance, args);
-				}
+				};
 			}
 			dezalgo(iterateAsyncMiddleware, null, [instance, middleware, args.slice(0, n)], callback);
 		};
@@ -173,7 +173,6 @@ function createSyncHooks(instance, config) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
 			var args = _.toArray(arguments);
-			var n = args.length - 1;
 			var middleware = instance.getMiddleware(q.pre + ':' + hookObj.name);
 			var result;
 			var callOriginal = function() {
