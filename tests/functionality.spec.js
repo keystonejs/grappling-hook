@@ -3,8 +3,6 @@
 
 var expect = require('must');
 var subject = require('../index');
-var sinon = require('sinon');
-var $ = require('./fixtures');
 
 describe('-- functionality --', function() {
 	describe('spec file', function() {
@@ -22,7 +20,7 @@ describe('-- functionality --', function() {
 		it('should pass all parameters to async serial pre middleware; #11', function(done) {
 			var passed;
 			var a = 1;
-			var b = "b";
+			var b = 'b';
 			instance.test = function(a, b, done) {
 				done();
 			};
@@ -39,7 +37,7 @@ describe('-- functionality --', function() {
 		it('should pass all parameters to async parallel pre middleware; #11', function(done) {
 			var passed;
 			var a = 1;
-			var b = "b";
+			var b = 'b';
 			instance.test = function(a, b, done) {
 				done();
 			};
@@ -57,7 +55,7 @@ describe('-- functionality --', function() {
 		it('should pass all parameters to sync pre middleware; #11', function(done) {
 			var passed;
 			var a = 1;
-			var b = "b";
+			var b = 'b';
 			instance.test = function(a, b, done) {
 				done();
 			};
@@ -73,7 +71,7 @@ describe('-- functionality --', function() {
 		it('should pass all parameters to async serial post middleware; #11', function(done) {
 			var passed;
 			var a = 1;
-			var b = "b";
+			var b = 'b';
 			instance.test = function(a, b, done) {
 				done();
 			};
@@ -90,7 +88,7 @@ describe('-- functionality --', function() {
 		it('should pass all parameters to async parallel post middleware; #11', function(done) {
 			var passed;
 			var a = 1;
-			var b = "b";
+			var b = 'b';
 			instance.test = function(a, b, done) {
 				done();
 			};
@@ -108,7 +106,7 @@ describe('-- functionality --', function() {
 		it('should pass all parameters to sync post middleware; #11', function(done) {
 			var passed;
 			var a = 1;
-			var b = "b";
+			var b = 'b';
 			instance.test = function(a, b, done) {
 				done();
 			};
@@ -126,8 +124,8 @@ describe('-- functionality --', function() {
 		it('should pass all parameters to sync pre middleware; #11', function() {
 			var passed;
 			var a = 1;
-			var b = "b";
-			instance.test = function(a, b) {
+			var b = 'b';
+			instance.test = function() {
 			};
 			instance.addSyncHooks('test')
 				.pre('test', function(a, b) {
@@ -139,8 +137,8 @@ describe('-- functionality --', function() {
 		it('should pass all parameters to sync post middleware; #11', function() {
 			var passed;
 			var a = 1;
-			var b = "b";
-			instance.test = function(a, b) {
+			var b = 'b';
+			instance.test = function() {
 			};
 			instance.addSyncHooks('test')
 				.post('test', function(a, b) {
