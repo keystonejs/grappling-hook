@@ -49,20 +49,21 @@ describe('-- synchronicity --', function() {
 		isAsync = true;
 	});
 	
-	it('should call the next middleware async even with sync serial middleware', function(done){
+	it('should call the next middleware sync with sync serial middleware', function(done){
 		var isAsync;
 		instance.hook($.PRE_TEST, function(next){
 			isAsync = false;
 			next();
 			isAsync = true;
 		}, function(){
-			expect(isAsync).to.be.true();
+			expect(isAsync).to.be.false();
 		}).callHook($.PRE_TEST, function(){
+			expect(isAsync).to.be.true(); // just making sure it's dezalgofied
 			done();
 		});
 	});
 	
-	it('should call the next middleware async even with sync parallel middleware', function(done){
+	it('should call the next middleware sync with sync parallel middleware', function(done){
 		var isAsync;
 		instance.hook($.PRE_TEST, function(next, done){
 			isAsync = false;
@@ -70,8 +71,9 @@ describe('-- synchronicity --', function() {
 			isAsync = true;
 			done();
 		}, function(){
-			expect(isAsync).to.be.true();
+			expect(isAsync).to.be.false();
 		}).callHook($.PRE_TEST, function(){
+			expect(isAsync).to.be.true(); // just making sure it's dezalgofied
 			done();
 		});
 	});

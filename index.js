@@ -99,10 +99,10 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 		var d = (callback.isAsync) ? 1 : callback.length - args.length;
 		switch (d) {
 			case 1: //async series
-				dezalgo(callback, context, args, next);
+				callback.apply( context, args.concat(next));
 				break;
 			case 2: //async parallel
-				dezalgo(callback, context, args, next, wait(callback));
+				callback.apply( context, args.concat(next, wait(callback)));
 				break;
 			default :
 				//synced
