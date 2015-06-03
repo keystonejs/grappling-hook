@@ -385,16 +385,16 @@ describe('-- API --', function() {
 				called;
 			beforeEach(function() {
 				called = [];
-				pre = function() {
+				pre = function pre() {
 					called.push('pre');
 				};
-				original = function(foo, done) {
+				original = function original(foo, done) {
 					setTimeout(function() {
 						called.push('original');
-						done && done();
+						done();
 					}, 0);
 				};
-				post = function() {
+				post = function post() {
 					called.push('post');
 				};
 				instance.test = original;
@@ -411,7 +411,7 @@ describe('-- API --', function() {
 			it('should add a qualified hook to an existing method', function(done) {
 				instance.addHooks($.PRE_TEST)
 					.hook($.PRE_TEST, pre)
-					.test('foo', function() {
+					.test('foo', function final() {
 						expect(called).to.eql(['pre', 'original']);
 						done();
 					});
