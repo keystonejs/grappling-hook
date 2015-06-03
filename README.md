@@ -33,20 +33,20 @@ var grappling = require('grappling-hook');
 var instance = grappling.create(); // create an instance
 
 instance.addHooks({ // declare the hookable methods
-	save: function(done){
+	save: function(done) {
 		console.log('save!');
 		done();
 	}
 });
 
-instance.pre('save', function(){ //allow middleware to be registered for a hook
+instance.pre('save', function() { //allow middleware to be registered for a hook
 	console.log('saving!');
-}).post('save', function(){
+}).post('save', function() {
 	console.log('saved!');
 });
 
-instance.save(function(err){
-  console.log('All done!!');
+instance.save(function(err) {
+	console.log('All done!!');
 });
 ```
 ```sh
@@ -54,7 +54,7 @@ instance.save(function(err){
 saving!
 save!
 saved!
-All done!
+All done!!
 ```
 
 #### Using an existing object
@@ -65,9 +65,9 @@ Or you can choose to enable hooking for an already existing object with methods:
 var grappling = require('grappling-hook');
 
 var instance = {
-	save : function(done){
+	save: function(done) {
 		console.log('save!');
-		done && done();
+		done();
 	}
 };
 
@@ -75,19 +75,23 @@ grappling.mixin(instance); // add grappling-hook functionality to an existing ob
 
 instance.addHooks('save'); // setup hooking for an existing method
 
-instance.pre('save', function(){
+instance.pre('save', function() {
 	console.log('saving!');
-}).post('save', function(){
+}).post('save', function() {
 	console.log('saved!');
 });
 
-instance.save();
+instance.save(function(err) {
+	console.log('All done!!');
+});
+
 ```
 ```sh
 # output:
 saving!
 save!
 saved!
+All done!!
 ```
 
 #### Using a 'class'
@@ -97,30 +101,34 @@ Or you can patch a `prototype` with `grappling-hook` methods:
 ```js
 var grappling = require('grappling-hook');
 
-var Clazz = function(){};
-Clazz.prototype.save = function(done){
+var Clazz = function() {
+};
+Clazz.prototype.save = function(done) {
 	console.log('save!');
-	done && done();
-}
+	done();
+};
 
 grappling.attach(Clazz); // attach grappling-hook functionality to a 'class'
 
 var instance = new Clazz();
 instance.addHooks('save'); // setup hooking for an existing method
 
-instance.pre('save', function(){
+instance.pre('save', function() {
 	console.log('saving!');
-}).post('save', function(){
+}).post('save', function() {
 	console.log('saved!');
 });
 
-instance.save();
+instance.save(function(err) {
+	console.log('All done!!');
+});
 ```
 ```sh
 # output:
 saving!
 save!
 saved!
+All done!!
 ```
 
 All of this is pretty standard stuff, there's two things to note here though:
@@ -136,8 +144,8 @@ All of this is pretty standard stuff, there's two things to note here though:
 var grappling = require('grappling-hook');
 
 var instance = {
-	saveSync : function(filename){
-		filename = Date.now() + "-" + filename; 
+	saveSync: function(filename) {
+		filename = Date.now() + '-' + filename;
 		console.log('save', filename);
 		return filename;
 	}
@@ -147,13 +155,13 @@ grappling.mixin(instance); // add grappling-hook functionality to an existing ob
 
 instance.addSyncHooks('saveSync'); // setup hooking for an existing (sync) method
 
-instance.pre('saveSync', function(){
+instance.pre('saveSync', function() {
 	console.log('saving!');
-}).post('saveSync', function(){
+}).post('saveSync', function() {
 	console.log('saved!');
 });
 
-var newName = instance.saveSync("example.txt");
+var newName = instance.saveSync('example.txt');
 console.log('new name:', newName);
 ```
 ```sh
@@ -206,31 +214,31 @@ The type of function is identified through the parameters it accepts:
 You can **mix sync/async serial/parallel middleware** any way you choose:
 
 ```js
-instance.pre('save', function(next){
+instance.pre('save', function(next) {
 	//async serial
 	console.log('A setup');
-	setTimeout(function(){
+	setTimeout(function() {
 		console.log('A done');
 		next();
-	}, 1000);
-}, function(){
+	}, 100);
+}, function() {
 	//sync
 	console.log('B done');
-}, function(next, done){
+}, function(next, done) {
 	//async parallel
 	console.log('C setup');
-	setTimeout(function(){
+	setTimeout(function() {
 		console.log('C done');
 		done();
-	}, 2000);
+	}, 200);
 	next();
-}, function(next, done){
+}, function(next, done) {
 	//async parallel
 	console.log('D setup');
-	setTimeout(function(){
+	setTimeout(function() {
 		console.log('D done');
 		done();
-	}, 300);
+	}, 30);
 	next();
 });
 ```
@@ -251,13 +259,16 @@ We've provided another (convenience) method to add middleware too: `hook`. It re
 
 ```js
 instance.hook('pre:save', function(){
-	console.log("pre");
-})
-instance.save();
+	console.log('pre');
+});
+instance.save(function(){
+	console.log('All done!!');
+});
 ```
 ```sh
 # output
 pre
+All done!!
 ```
 
 #### Easy parameter passing
@@ -321,7 +332,7 @@ instance.pre('save', function(foo, bar){
 	console.log('saving!', foo, bar);
 });
 
-instance.callHook('pre:save', "foo", { bar: "bar"});
+instance.callHook('pre:save', 'foo', { bar: 'bar'});
 ```
 ```sh
 # output:
@@ -366,24 +377,25 @@ That's me!!
 However, `callHook` accepts a `context` parameter to change the scope:
 
 ```js
-instance.pre('save', function(){
+instance.pre('save', function() {
 	console.log(this);
 });
 
-instance.toString = function(){
+instance.toString = function() {
 	return "That's me!!";
 };
 
 var context = {
-	toString : function(){
-		return "Different context!"
+	toString: function() {
+		return 'Different context!';
 	}
-}
+};
 instance.callHook(context, 'pre:save');
 ```
 ```sh
 # output:
 Different context!
+All done!!
 ```
 
 #### callback
@@ -393,9 +405,9 @@ And last, but definitely not least, if you want to be able to respond to all mid
 ```js
 instance.pre('save', function asyncMiddleware(next){
 	setTimeout(function(){
-		console.log("middleware");
+		console.log('middleware');
 		next();
-	}, 1000);
+	}, 100);
 });
 
 instance.callHook('pre:save', function(){
@@ -422,7 +434,7 @@ I you want to enforce a synchronized execution of hook middleware you can use `c
 
 ```js
 instance.pre('saveSync', function syncMiddleware(foo, bar){
-	console.log("middleware", foo, bar);
+	console.log('middleware', foo, bar);
 });
 
 console.log('before callSyncHook');
@@ -491,7 +503,7 @@ There's one caveat: you _have_ to configure both or none.
 
 	```js
 	instance.pre('save', function(){
-		throw new Error("Oh noes!");
+		throw new Error('Oh noes!');
 	});
 	instance.callHook('pre:save', function(err){
 		if(err){
