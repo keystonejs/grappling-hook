@@ -19,8 +19,8 @@
  * 	setTimeout(done, 2000);
  * }
  * @callback middleware
- * @param {...*} [parameters] - parameters passed to the hook 
- * @param {function} [next] - pass control to the next middleware 
+ * @param {...*} [parameters] - parameters passed to the hook
+ * @param {function} [next] - pass control to the next middleware
  * @param {function} [done] - mark parallel middleware to have completed
  */
 
@@ -42,7 +42,7 @@
  */
 
 /**
- * 
+ *
  * @type {exports|module.exports}
  * @private
  */
@@ -109,12 +109,11 @@ function attachQualifier(instance, qualifier) {
 }
 
 function init(opts) {
-	if(_.isString(opts)){
+	if (_.isString(opts)) {
 		opts = settings[opts];
 	}
 	this.__grappling = {
 		middleware: {},
-		hooks: [],
 		opts: _.defaults({}, opts, {
 			strict: true,
 			qualifiers: {
@@ -289,7 +288,7 @@ function parseCallHookParams(instance, args) {
  * @mixin
  */
 var methods = {
-	
+
 	/**
 	 * Adds middleware to a hook
 	 *
@@ -479,49 +478,46 @@ var methods = {
 	}
 };
 
-/**
- *
- * @param {Object} instance
- * @param {options|string} [opts]
- * @mixes GrapplingHook
- * @returns {GrapplingHook}
- */
-function mixin(instance, opts) {
-	init.call(instance, opts);
-	_.extend(instance, methods);
-	return instance;
-}
-
-/**
- *
- * @param {Function} clazz
- * @param {options|string} [opts]
- * @mixes GrapplingHook
- * @returns {Function}
- */
-function attach(clazz, opts) {
-	mixin(clazz.prototype, opts);
-	return clazz;
-}
-
-/**
- *
- * @param {options|string} [opts]
- * @returns {GrapplingHook}
- */
-function create(opts) {
-	return mixin({}, opts);
-}
-
-var settings={};
+var settings = {};
 
 module.exports = {
-	mixin: mixin,
-	create: create,
-	attach: attach,
-	define: function(name, opts){
-		if(settings[name]){
-			throw new Error('Settings for "'+name+'" already defined.');
+	/**
+	 *
+	 * @param {Object} instance
+	 * @param {options|string} [opts]
+	 * @mixes GrapplingHook
+	 * @returns {GrapplingHook}
+	 */
+	mixin: function mixin(instance, opts) {
+		init.call(instance, opts);
+		_.extend(instance, methods);
+		return instance;
+	},
+	
+	/**
+	 *
+	 * @param {options|string} [opts]
+	 * @returns {GrapplingHook}
+	 */
+	create: function create(opts) {
+		return module.exports.mixin({}, opts);
+	},
+
+	/**
+	 *
+	 * @param {Function} clazz
+	 * @param {options|string} [opts]
+	 * @mixes GrapplingHook
+	 * @returns {Function}
+	 */
+	attach: function attach(clazz, opts) {
+		module.exports.mixin(clazz.prototype, opts);
+		return clazz;
+	},
+	
+	define: function(name, opts) {
+		if (settings[name]) {
+			throw new Error('Settings for "' + name + '" already defined.');
 		}
 		settings[name] = opts;
 		return module.exports;
