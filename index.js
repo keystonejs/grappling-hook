@@ -41,11 +41,6 @@
  * instance.before('save', console.log);
  */
 
-/**
- *
- * @type {exports|module.exports}
- * @private
- */
 var _ = require('lodash');
 var async = require('async');
 
@@ -80,6 +75,8 @@ function addMiddleware(instance, hook, args) {
 
 function attachQualifier(instance, qualifier) {
 	/**
+	 * Registers `middleware` to be executed _before_ `hook`.
+	 * This is a dynamically added method, that may not be present if otherwise configured in {@link options}.
 	 * @method pre
 	 * @instance
 	 * @memberof GrapplingHook
@@ -91,6 +88,8 @@ function attachQualifier(instance, qualifier) {
 	 * });
 	 */
 	/**
+	 * Registers `middleware` to be executed _after_ `hook`.
+	 * This is a dynamically added method, that may not be present if otherwise configured in {@link options}.
 	 * @method post
 	 * @instance
 	 * @memberof GrapplingHook
@@ -480,13 +479,22 @@ var methods = {
 
 var settings = {};
 
+/**
+ * @module grappling-hook
+ * @type {exports|module.exports}
+ */
 module.exports = {
 	/**
-	 *
+	 * Mixes {@link GrapplingHook} methods into `instance`.
 	 * @param {Object} instance
-	 * @param {options|string} [opts]
+	 * @param {options|string} [opts] - {@link options} or an options cache name, see {@link module:grappling-hook.define define}.
 	 * @mixes GrapplingHook
 	 * @returns {GrapplingHook}
+	 * @example
+	 * var grappling = require('grappling-hook');
+	 * var instance = {
+	 * };
+	 * grappling.mixin(instance); // add grappling-hook functionality to an existing object
 	 */
 	mixin: function mixin(instance, opts) {
 		init.call(instance, opts);
@@ -495,26 +503,57 @@ module.exports = {
 	},
 	
 	/**
-	 *
-	 * @param {options|string} [opts]
+	 * Creates an object with {@link GrapplingHook} functionality.
+	 * @param {options|string} [opts] - {@link options} or an options cache name, see {@link module:grappling-hook.define define}.
 	 * @returns {GrapplingHook}
+	 * @example
+	 * var grappling = require('grappling-hook');
+	 * var instance = grappling.create(); // create an instance
 	 */
 	create: function create(opts) {
 		return module.exports.mixin({}, opts);
 	},
 
 	/**
-	 *
+	 * Attaches {@link GrapplingHook} methods to `clazz`'s `prototype`.
 	 * @param {Function} clazz
-	 * @param {options|string} [opts]
+	 * @param {options|string} [opts] - {@link options} or an options cache name, see {@link module:grappling-hook.define define}.
 	 * @mixes GrapplingHook
 	 * @returns {Function}
+	 * @example
+	 * var grappling = require('grappling-hook');
+	 * var Clazz = function() {
+	 * };
+	 * Clazz.prototype.save = function(done) {
+	 *   console.log('save!');
+	 *   done();
+	 * };
+	 * grappling.attach(Clazz); // attach grappling-hook functionality to a 'class'
 	 */
 	attach: function attach(clazz, opts) {
 		module.exports.mixin(clazz.prototype, opts);
 		return clazz;
 	},
-	
+
+	/**
+	 * Cache options as `name`.
+	 * @param {string} name
+	 * @param {options} opts
+	 * @returns {module:grappling-hook}
+	 * @example
+	 * //index.js
+	 * var grappling = require('grappling-hook');
+	 * grappling.define('example', {
+	 *   strict: false,
+	 *   qualifiers: {
+	 *     pre: 'before',
+	 *     post: 'after'
+	 *   }
+	 * });
+	 * 
+	 * //foo.js
+	 * var instance = grappling.create('example'); // uses options as cached for 'example'
+	 */
 	define: function(name, opts) {
 		if (settings[name]) {
 			throw new Error('Settings for "' + name + '" already defined.');
