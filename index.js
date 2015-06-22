@@ -44,6 +44,8 @@
 var _ = require('lodash');
 var async = require('async');
 
+var settings = {};
+
 function parseHook(hook) {
 	var parsed = (hook) ? hook.split(':') : [];
 	var n = parsed.length;
@@ -476,8 +478,6 @@ var methods = {
 		return this.getMiddleware(qualifiedHook).length > 0;
 	}
 };
-
-var settings = {};
 
 /**
  * @module grappling-hook
