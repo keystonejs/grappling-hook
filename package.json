@@ -8,7 +8,8 @@
     "lint": "eslint index.js tests",
     "test-cov": "istanbul cover _mocha tests",
     "travis": "npm run lint && npm test",
-    "coveralls": "npm run test-cov;cat ./coverage/lcov.info | coveralls"
+    "coveralls": "npm run test-cov;cat ./coverage/lcov.info | coveralls",
+    "docs": "jsdoc -c jsdoc.json"
   },
   "repository": {
     "type": "git",
@@ -34,6 +35,7 @@
     "coveralls": "^2.11.2",
     "eslint": "^0.20.0",
     "istanbul": "^0.3.13",
+    "jsdoc": "^3.3.2",
     "mocha": "^2.2.4",
     "must": "^0.12.0",
     "require-directory": "^2.1.0",
