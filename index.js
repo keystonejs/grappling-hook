@@ -109,6 +109,9 @@ function attachQualifier(instance, qualifier) {
 }
 
 function init(opts) {
+	if(_.isString(opts)){
+		opts = settings[opts];
+	}
 	this.__grappling = {
 		middleware: {},
 		hooks: [],
@@ -479,9 +482,9 @@ var methods = {
 /**
  *
  * @param {Object} instance
- * @param {options} [opts]
+ * @param {options|string} [opts]
  * @mixes GrapplingHook
- * @returns {Object}
+ * @returns {GrapplingHook}
  */
 function mixin(instance, opts) {
 	init.call(instance, opts);
@@ -492,7 +495,7 @@ function mixin(instance, opts) {
 /**
  *
  * @param {Function} clazz
- * @param {options} [opts]
+ * @param {options|string} [opts]
  * @mixes GrapplingHook
  * @returns {Function}
  */
@@ -503,15 +506,24 @@ function attach(clazz, opts) {
 
 /**
  *
- * @param {options} [opts]
+ * @param {options|string} [opts]
  * @returns {GrapplingHook}
  */
 function create(opts) {
 	return mixin({}, opts);
 }
 
+var settings={};
+
 module.exports = {
 	mixin: mixin,
 	create: create,
-	attach: attach
+	attach: attach,
+	define: function(name, opts){
+		if(settings[name]){
+			throw new Error('Settings for "'+name+'" already defined.');
+		}
+		settings[name] = opts;
+		return module.exports;
+	}
 };
