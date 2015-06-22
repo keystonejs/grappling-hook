@@ -180,7 +180,7 @@ function createSyncHooks(instance, config) {
 			};
 			middleware.push(callOriginal);
 			middleware = middleware.concat(instance.getMiddleware(q.post + ':' + hookObj.name));
-			iterateAsyncMiddleware(instance, middleware, args);
+			iterateSyncMiddleware(instance, middleware, args);
 			return result;
 		};
 	});
