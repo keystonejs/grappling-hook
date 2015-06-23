@@ -177,8 +177,13 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 				break;
 			default :
 				//synced
-				callback.apply(context, args);
-				next();
+				var err;
+				try {
+					callback.apply(context, args);
+				} catch (e) {
+					err = e;
+				}
+				next(err);
 		}
 	}, function(err) {
 		asyncFinished = (err) ? done : true;
@@ -501,7 +506,7 @@ module.exports = {
 		_.extend(instance, methods);
 		return instance;
 	},
-	
+
 	/**
 	 * Creates an object with {@link GrapplingHook} functionality.
 	 * @param {options|string} [opts] - {@link options} or an options cache name, see {@link module:grappling-hook.define define}.
@@ -550,7 +555,7 @@ module.exports = {
 	 *     post: 'after'
 	 *   }
 	 * });
-	 * 
+	 *
 	 * //foo.js
 	 * var instance = grappling.create('example'); // uses options as cached for 'example'
 	 */
