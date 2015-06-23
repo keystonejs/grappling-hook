@@ -6,7 +6,7 @@ var subject = require('../index');
 var $ = require('./fixtures');
 var console;
 var Date; //eslint-disable-line no-native-reassign
-describe('-- examples --', function() {
+describe('examples', function() {
 	describe('spec file', function() {
 		it('should be found', function() {
 			expect(true).to.be.true();
@@ -366,11 +366,7 @@ describe('-- examples --', function() {
 				instance.pre('save', function() {
 					throw new Error('Oh noes!');
 				});
-				instance.callHook('pre:save', function(err) {
-					if (err) {
-						console.log('An error occurred:', err); // <--- will not be called
-					}
-				});
+				instance.callSyncHook('pre:save');
 			}).to.throw(/Oh noes!/);
 		});
 	});
