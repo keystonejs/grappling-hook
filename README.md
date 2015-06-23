@@ -505,11 +505,7 @@ There's one caveat: you _have_ to configure both or none.
 	instance.pre('save', function(){
 		throw new Error('Oh noes!');
 	});
-	instance.callHook('pre:save', function(err){
-		if(err){
-			console.log('An error occurred:', err); // <--- will not be called
-		}
-	});
+	instance.callHook('pre:save');
 	```
 	```sh
 	# output:
