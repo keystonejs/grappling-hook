@@ -44,7 +44,7 @@
 var _ = require('lodash');
 var async = require('async');
 
-var settings = {};
+var cache = {};
 
 function parseHook(hook) {
 	var parsed = (hook) ? hook.split(':') : [];
@@ -109,13 +109,18 @@ function attachQualifier(instance, qualifier) {
 	};
 }
 
-function init(opts) {
-	if (_.isString(opts)) {
-		opts = settings[opts];
+function init(name, opts) {
+	if (arguments.length === 1 && _.isObject(name)) {
+		opts = name;
+		name = undefined;
+	}
+	var presets;
+	if (name) {
+		presets = module.exports.get(name);
 	}
 	this.__grappling = {
 		middleware: {},
-		opts: _.defaults({}, opts, {
+		opts: _.defaults({}, opts, presets, {
 			strict: true,
 			qualifiers: {
 				pre: 'pre',
@@ -496,7 +501,8 @@ module.exports = {
 	/**
 	 * Mixes {@link GrapplingHook} methods into `instance`.
 	 * @param {Object} instance
-	 * @param {options|string} [opts] - {@link options} or an options cache name, see {@link module:grappling-hook.define define}.
+	 * @param {string} [presets] - presets name, see {@link module:grappling-hook.set set}
+	 * @param {options} [opts] - {@link options}.
 	 * @mixes GrapplingHook
 	 * @returns {GrapplingHook}
 	 * @example
@@ -505,28 +511,32 @@ module.exports = {
 	 * };
 	 * grappling.mixin(instance); // add grappling-hook functionality to an existing object
 	 */
-	mixin: function mixin(instance, opts) {
-		init.call(instance, opts);
+	mixin: function mixin(instance, presets, opts) {
+		var args= _.toArray(arguments);
+		instance = args.shift();
+		init.apply(instance, args);
 		_.extend(instance, methods);
 		return instance;
 	},
 
 	/**
 	 * Creates an object with {@link GrapplingHook} functionality.
-	 * @param {options|string} [opts] - {@link options} or an options cache name, see {@link module:grappling-hook.define define}.
+	 * @param {string} [presets] - presets name, see {@link module:grappling-hook.set set}
+	 * @param {options} [opts] - {@link options}.
 	 * @returns {GrapplingHook}
 	 * @example
 	 * var grappling = require('grappling-hook');
 	 * var instance = grappling.create(); // create an instance
 	 */
-	create: function create(opts) {
-		return module.exports.mixin({}, opts);
+	create: function create(presets, opts) {
+		return module.exports.mixin.apply(null, [{}].concat(_.toArray(arguments)));
 	},
 
 	/**
 	 * Attaches {@link GrapplingHook} methods to `clazz`'s `prototype`.
 	 * @param {Function} clazz
-	 * @param {options|string} [opts] - {@link options} or an options cache name, see {@link module:grappling-hook.define define}.
+	 * @param {string} [presets] - presets name, see {@link module:grappling-hook.set set}
+	 * @param {options} [opts] - {@link options}.
 	 * @mixes GrapplingHook
 	 * @returns {Function}
 	 * @example
@@ -539,20 +549,24 @@ module.exports = {
 	 * };
 	 * grappling.attach(Clazz); // attach grappling-hook functionality to a 'class'
 	 */
-	attach: function attach(clazz, opts) {
-		module.exports.mixin(clazz.prototype, opts);
+	attach: function attach(clazz, presets, opts) {
+		if(clazz.prototype){
+			arguments[0]=clazz.prototype;
+		}
+		module.exports.mixin.apply(null, arguments);
 		return clazz;
 	},
 
 	/**
-	 * Cache options as `name`.
+	 * Store `presets` as `name`. Or set a specific value of a preset.
+	 * (The use of namespaces is to avoid the very unlikely case of name conflicts with deduped node_modules)
 	 * @param {string} name
-	 * @param {options} opts
+	 * @param {options} presets
 	 * @returns {module:grappling-hook}
 	 * @example
-	 * //index.js
+	 * //index.js - declaration
 	 * var grappling = require('grappling-hook');
-	 * grappling.define('example', {
+	 * grappling.set('grapplinghook:example', {
 	 *   strict: false,
 	 *   qualifiers: {
 	 *     pre: 'before',
@@ -560,14 +574,30 @@ module.exports = {
 	 *   }
 	 * });
 	 *
-	 * //foo.js
-	 * var instance = grappling.create('example'); // uses options as cached for 'example'
+	 * //foo.js - usage
+	 * var instance = grappling.create('grapplinghook:example'); // uses options as cached for 'grapplinghook:example'
+	 * @example
+	 * grappling.set('grapplinghook:example.qualifiers.pre', 'first');
+	 * grappling.set('grapplinghook:example.qualifiers.post', 'last');
 	 */
-	define: function(name, opts) {
-		if (settings[name]) {
-			throw new Error('Settings for "' + name + '" already defined.');
-		}
-		settings[name] = opts;
+	set: function(name, presets) {
+		_.set(cache, name, presets);
 		return module.exports;
+	},
+
+	/**
+	 * Retrieves presets stored as `name`. Or a specific value of a preset.
+	 * (The use of namespaces is to avoid the very unlikely case of name conflicts with deduped node_modules)
+	 * @param {string} name
+	 * @returns {*}
+	 * @example
+	 * grappling.get('grapplinghook:example.qualifiers.pre');
+	 * @example
+	 * grappling.get('grapplinghook:example.qualifiers');
+	 * @example
+	 * grappling.get('grapplinghook:example');
+	 */
+	get: function(name) {
+		return _.get(cache, name);
 	}
 };
