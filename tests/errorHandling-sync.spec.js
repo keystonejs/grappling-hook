@@ -38,7 +38,7 @@ describe('sync hooks: error handling', function() {
 			);
 			try {
 				instance.callSyncHook($.PRE_TEST);
-			} catch (err) {
+			} catch (err) { //eslint-disable-line no-empty
 			}
 			expect(isCalled).to.be.false();
 		});
