@@ -12,6 +12,6 @@ describe('module.create', function() {
 	});
 	it('should return a grappling-hook object', function() {
 		var instance = subject.create();
-		expect(instance).to.have.keys($.MEMBERS);
+		expect($.isGrapplingHook(instance)).to.be.true();
 	});
 });

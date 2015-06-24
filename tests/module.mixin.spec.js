@@ -13,6 +13,6 @@ describe('module.mixin', function() {
 	it('should add grappling-hook functions to an existing object', function() {
 		var instance = {};
 		subject.mixin(instance);
-		expect(instance).to.have.keys($.MEMBERS);
+		expect($.isGrapplingHook(instance)).to.be.true();
 	});
 });

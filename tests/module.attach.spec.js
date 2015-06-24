@@ -1,6 +1,7 @@
 'use strict';
 /* eslint-env node, mocha */
 
+var _= require('lodash');
 var expect = require('must');
 
 var subject = require('../index');
@@ -21,7 +22,7 @@ describe('module.attach', function() {
 		var ModifiedClazz = subject.attach(Clazz),
 			instance = new ModifiedClazz();
 		expect(instance).to.be.an.instanceOf(Clazz);
-		expect(instance).to.have.keys($.MEMBERS);
+		expect($.isGrapplingHook(instance)).to.be.true();
 	});
 	it('should make a functional prototype', function() {
 		subject.attach(Clazz);
