@@ -132,17 +132,18 @@ function init(opts) {
  based on code from Isaac Schlueter's blog post: 
  http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony
  */
-function dezalgo(callback, context, args, next, done) {
+function dezalgofy(fn, done) {
 	var isSync = true;
-	callback.apply(context, args.concat(safeNext, done)); //eslint-disable-line no-use-before-define
+	fn(safeDone); //eslint-disable-line no-use-before-define
 	isSync = false;
-	function safeNext(err) {
+	function safeDone() {
+		var args = _.toArray(arguments);
 		if (isSync) {
 			process.nextTick(function() {
-				next(err);
+				done.apply(null, args);
 			});
 		} else {
-			next(err);
+			done.apply(null, args);
 		}
 	}
 }
@@ -170,10 +171,10 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 		var d = (callback.isAsync) ? 1 : callback.length - args.length;
 		switch (d) {
 			case 1: //async series
-				callback.apply( context, args.concat(next));
+				callback.apply(context, args.concat(next));
 				break;
 			case 2: //async parallel
-				callback.apply( context, args.concat(next, wait(callback)));
+				callback.apply(context, args.concat(next, wait(callback)));
 				break;
 			default :
 				//synced
@@ -218,27 +219,27 @@ function createHooks(instance, config) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
 			var args = _.toArray(arguments);
-			var n = args.length - 1;
-			if (!_.isFunction(args[n])) {
+			var done = args.pop();
+			if (!_.isFunction(done)) {
 				throw new Error('Async methods should receive a callback as a final parameter');
 			}
-			var middleware = instance.getMiddleware(q.pre + ':' + hookObj.name);
-			var post = instance.getMiddleware(q.post + ':' + hookObj.name);
-			var callback = args[n];
-			if (post.length) {
-				var callOriginal = function() {
-					var args = _.toArray(arguments);
-					fn.apply(instance, args);
-				};
-				callOriginal.isAsync = true;
-				middleware.push(callOriginal);
-				middleware = middleware.concat(post);
-			} else {
-				callback = function() {
-					fn.apply(instance, args);
-				};
-			}
-			dezalgo(iterateAsyncMiddleware, null, [instance, middleware, args.slice(0, n)], callback);
+			var results;
+			dezalgofy(function(safeDone) {
+				async.series([function(next) {
+					iterateAsyncMiddleware(instance, instance.getMiddleware(q.pre + ':' + hookObj.name), args, next);
+				}, function(next) {
+					fn.apply(instance, args.concat(function() {
+						var args = _.toArray(arguments);
+						var err = args.shift();
+						results = args;
+						next(err);
+					}));
+				}, function(next) {
+					iterateAsyncMiddleware(instance, instance.getMiddleware(q.post + ':' + hookObj.name), args, next);
+				}], function(err) {
+					safeDone.apply(null, [err].concat(results));
+				});
+			}, done);
 		};
 	});
 }
@@ -440,7 +441,10 @@ var methods = {
 	callHook: function() {
 		var params = parseCallHookParams(this, _.toArray(arguments));
 		params.done = (_.isFunction(params.args[params.args.length - 1])) ? params.args.pop() : null;
-		dezalgo(iterateAsyncMiddleware, null, [params.context, this.getMiddleware(params.hook), params.args], params.done);
+		var self = this;
+		dezalgofy(function(safeDone) {
+			iterateAsyncMiddleware(params.context, self.getMiddleware(params.hook), params.args, safeDone);
+		}, params.done);
 		return this;
 	},
 

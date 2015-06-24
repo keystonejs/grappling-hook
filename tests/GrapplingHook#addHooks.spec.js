@@ -2,6 +2,7 @@
 
 /* eslint-env node, mocha */
 
+var _ = require('lodash');
 var expect = require('must');
 
 var subject = require('../index');
@@ -219,6 +220,20 @@ describe('GrapplingHook#addHooks', function() {
 				})
 				.test(a, b, function() {
 					expect(passed).to.eql([a, b]);
+					done();
+				});
+		});
+		it('should allow passing values to the final callback', function(done) {
+			var a = 1;
+			var b = 'b';
+			instance.test = function(done) {
+				done(null, a, b);
+			};
+			instance.addHooks('test')
+				.test(function() {
+					var args = _.toArray(arguments);
+					args.shift();
+					expect(args).to.eql([a, b]);
 					done();
 				});
 		});
