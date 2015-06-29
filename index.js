@@ -364,12 +364,18 @@ var methods = {
 	/**
 	 * Determines whether registration of middleware to `qualifiedHook` is allowed. (Always returns `true` for lenient instances)
 	 * @instance
-	 * @param {String} qualifiedHook - qualified hook e.g. `pre:save`
+	 * @param {String|String[]} qualifiedHook - qualified hook e.g. `pre:save`
 	 * @returns {boolean}
 	 */
 	hookable: function(qualifiedHook) {
-		qualifyHook(parseHook(qualifiedHook));
-		return (this.__grappling.opts.strict) ? !!this.__grappling.middleware[qualifiedHook] : true;
+		if(!this.__grappling.opts.strict){
+			return true;
+		}
+		var args = _.flatten(_.toArray(arguments));
+		return _.every(args, function(qualifiedHook){
+			qualifyHook(parseHook(qualifiedHook));
+			return !!this.__grappling.middleware[qualifiedHook];
+		}, this);
 	},
 
 	/**
