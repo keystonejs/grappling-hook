@@ -367,7 +367,7 @@ var methods = {
 	 * @param {String|String[]} qualifiedHook - qualified hook e.g. `pre:save`
 	 * @returns {boolean}
 	 */
-	hookable: function(qualifiedHook) {
+	hookable: function(qualifiedHook) { //eslint-disable-line no-unused-vars
 		if(!this.__grappling.opts.strict){
 			return true;
 		}
@@ -517,7 +517,7 @@ module.exports = {
 	 * };
 	 * grappling.mixin(instance); // add grappling-hook functionality to an existing object
 	 */
-	mixin: function mixin(instance, presets, opts) {
+	mixin: function mixin(instance, presets, opts) {//eslint-disable-line no-unused-vars
 		var args = _.toArray(arguments);
 		instance = args.shift();
 		init.apply(instance, args);
@@ -534,7 +534,7 @@ module.exports = {
 	 * var grappling = require('grappling-hook');
 	 * var instance = grappling.create(); // create an instance
 	 */
-	create: function create(presets, opts) {
+	create: function create(presets, opts) {//eslint-disable-line no-unused-vars
 		return module.exports.mixin.apply(null, [{}].concat(_.toArray(arguments)));
 	},
 

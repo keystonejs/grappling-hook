@@ -1,7 +1,6 @@
 'use strict';
 /* eslint-env node, mocha */
 
-var _= require('lodash');
 var expect = require('must');
 
 var subject = require('../index');
