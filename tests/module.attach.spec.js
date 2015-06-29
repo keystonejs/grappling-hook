@@ -35,4 +35,13 @@ describe('module.attach', function() {
 			.callHook($.PRE_TEST);
 		expect(called).to.be.true();
 	});
+	it('should create instances with separate caches', function() {
+		subject.attach(Clazz);
+		var i1 = new Clazz();
+		i1.allowHooks('pre:test1');
+		var i2 = new Clazz();
+		i2.allowHooks('pre:test2');
+		expect(i1.hookable('pre:test2')).to.be.false();
+		expect(i2.hookable('pre:test1')).to.be.false();
+	});
 });

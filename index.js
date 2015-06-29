@@ -512,7 +512,7 @@ module.exports = {
 	 * grappling.mixin(instance); // add grappling-hook functionality to an existing object
 	 */
 	mixin: function mixin(instance, presets, opts) {
-		var args= _.toArray(arguments);
+		var args = _.toArray(arguments);
 		instance = args.shift();
 		init.apply(instance, args);
 		_.extend(instance, methods);
@@ -550,10 +550,16 @@ module.exports = {
 	 * grappling.attach(Clazz); // attach grappling-hook functionality to a 'class'
 	 */
 	attach: function attach(clazz, presets, opts) {
-		if(clazz.prototype){
-			arguments[0]=clazz.prototype;
-		}
-		module.exports.mixin.apply(null, arguments);
+		var proto = (clazz.prototype) ? clazz.prototype : clazz;
+		_.each(methods, function(fn, methodName) {
+			proto[methodName] = function() {
+				init.call(this, presets, opts);
+				_.each(methods, function(fn, methodName) {
+					this[methodName] = fn.bind(this);
+				}, this);
+				return fn.apply(this, _.toArray(arguments));
+			};
+		});
 		return clazz;
 	},
 
