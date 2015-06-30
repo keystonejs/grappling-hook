@@ -112,19 +112,19 @@ describe('GrapplingHook#callHook', function() {
 
 		});
 
-		it('should finish all promised middleware in a correct sequence', function(done) {
+		it('should finish all thenable middleware in a correct sequence', function(done) {
 			var expected = [
-				'A (promised) setup',
-				'A (promised) done',
-				'B (promised) setup',
-				'B (promised) done',
-				'C (promised) setup',
-				'C (promised) done'
+				'A (thenable) setup',
+				'A (thenable) done',
+				'B (thenable) setup',
+				'B (thenable) done',
+				'C (thenable) setup',
+				'C (thenable) done'
 			];
 			instance.pre('test',
-				$.factories.createPromised('A', sequence),
-				$.factories.createPromised('B', sequence),
-				$.factories.createPromised('C', sequence)
+				$.factories.createThenable('A', sequence),
+				$.factories.createThenable('B', sequence),
+				$.factories.createThenable('C', sequence)
 			);
 			instance.callHook($.PRE_TEST, function() {
 				expect($.factories.toRefString(sequence)).to.eql(expected);
@@ -180,8 +180,8 @@ describe('GrapplingHook#callHook', function() {
 				'C (parallel) done',
 				'D (parallel) done',
 				'E (serial) done',
-				'G (promised) setup',
-				'G (promised) done',
+				'G (thenable) setup',
+				'G (thenable) done',
 				'F (serial) setup',
 				'F (serial) done'
 			];
@@ -191,7 +191,7 @@ describe('GrapplingHook#callHook', function() {
 				$.factories.createParallel('C', sequence),
 				$.factories.createParallel('D', sequence),
 				$.factories.createSerial('E', sequence),
-				$.factories.createPromised('G', sequence),
+				$.factories.createThenable('G', sequence),
 				$.factories.createSerial('F', sequence)
 			);
 			instance.callHook($.PRE_TEST, function() {
@@ -236,7 +236,7 @@ describe('GrapplingHook#callHook', function() {
 			});
 			isAsync = true;
 		});
-		it('should finish async even with resolved promised middleware', function(done){
+		it('should finish async even with resolved thenable middleware', function(done){
 			
 			var promise = new P(function(resolve){
 				resolve();	

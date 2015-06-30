@@ -121,14 +121,14 @@ module.exports.createSyncWithArgs = function createSyncWithArgs(name, receiver) 
 	};
 };
 
-module.exports.createPromised = function createPromised(name, receiver){
+module.exports.createThenable = function createThenable(name, receiver){
 	var ref = new Ref({
 		name: name,
-		type: 'promised'
+		type: 'thenable'
 	});
 	return function() {
 		var resolve;
-		var promise = new P(function(succeed, fail) {
+		var thenable = new P(function(succeed, fail) {
 			resolve = succeed;
 		});
 		receiver.push(ref.clone( {
@@ -140,7 +140,7 @@ module.exports.createPromised = function createPromised(name, receiver){
 			}));
 			resolve();
 		}, 0);
-		return promise;
+		return thenable;
 	};
 	
 };

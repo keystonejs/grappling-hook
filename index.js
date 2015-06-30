@@ -195,7 +195,7 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 					err = e;
 				}
 				if (!err && isThenable(result)) {
-					//promise
+					//thenable
 					result.then(function() {
 						next();
 					}, next);
@@ -280,10 +280,10 @@ function createSyncHooks(instance, config) {
 	});
 }
 
-function createPromisedHooks(instance, config) {
+function createThenableHooks(instance, config) {
 	var opts = instance.__grappling.opts;
-	if (!opts.createPromise || !_.isFunction(opts.createPromise)) {
-		throw new Error('Instance not set up for promise creation, please set `opts.createPromise`');
+	if (!opts.createThenable || !_.isFunction(opts.createThenable)) {
+		throw new Error('Instance not set up for thenable creation, please set `opts.createThenable`');
 	}
 	_.each(config, function(fn, hook) {
 		var hookObj = parseHook(hook);
@@ -291,7 +291,7 @@ function createPromisedHooks(instance, config) {
 			var args = _.toArray(arguments);
 			var middleware = instance.getMiddleware(opts.qualifiers.pre + ':' + hookObj.name);
 			var deferred = {};
-			var promise = opts.createPromise(function(resolve, reject) {
+			var thenable = opts.createThenable(function(resolve, reject) {
 				deferred.resolve = resolve;
 				deferred.reject = reject;
 			});
@@ -310,7 +310,7 @@ function createPromisedHooks(instance, config) {
 				}
 				return deferred.resolve(deferred.result);
 			});
-			return promise;
+			return thenable;
 		};
 	});
 }
@@ -488,9 +488,9 @@ var methods = {
 		return this;
 	},
 
-	addPromisedHook: function() {
+	addThenableHooks: function() {
 		var config = addHooks(this, _.flatten(_.toArray(arguments)));
-		createPromisedHooks(this, config);
+		createThenableHooks(this, config);
 		return this;
 	},
 
@@ -528,10 +528,10 @@ var methods = {
 		return this;
 	},
 
-	callPromisedHook: function() {
+	callThenableHook: function() {
 		var params = parseCallHookParams(this, _.toArray(arguments));
 		var deferred = {};
-		var promise = this.__grappling.opts.createPromise(function(resolve, reject) {
+		var thenable = this.__grappling.opts.createThenable(function(resolve, reject) {
 			deferred.resolve = resolve;
 			deferred.reject = reject;
 		});
@@ -543,7 +543,7 @@ var methods = {
 			}
 			return deferred.resolve();
 		});
-		return promise;
+		return thenable;
 	},
 
 	/**
