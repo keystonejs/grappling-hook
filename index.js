@@ -430,6 +430,7 @@ var methods = {
 
 	/**
 	 * Wraps synchronous methods/functions with `pre` and/or `post` hooks
+	 * @since 2.4.0
 	 * @instance
 	 * @see {@link GrapplingHook#addHooks} for wrapping asynchronous methods
 	 * @param {(...String|String[]|...Object|Object[])} methods - method(s) that need(s) to emit `pre` and `post` events
@@ -461,6 +462,7 @@ var methods = {
 
 	/**
 	 * Calls all middleware subscribed to the synchronous `qualifiedHook` and passes remaining parameters to them
+	 * @since 2.4.0
 	 * @instance
 	 * @see {@link GrapplingHook#callHook} for calling asynchronous hooks
 	 * @param {*} [context] - the context in which the middleware will be called
@@ -498,6 +500,23 @@ var methods = {
 		return this.getMiddleware(qualifiedHook).length > 0;
 	}
 };
+
+/**
+ * alias for {@link GrapplingHook#addHooks}.
+ * @since 2.6.0
+ * @name GrapplingHook#addAsyncHooks
+ * @instance
+ * @method
+ */
+methods.addAsyncHooks = methods.addHooks;
+/**
+ * alias for {@link GrapplingHook#callHook}.
+ * @since 2.6.0
+ * @name GrapplingHook#callAsyncHook
+ * @instance
+ * @method
+ */
+methods.callAsyncHook = methods.callHook;
 
 /**
  * @module grappling-hook
@@ -572,6 +591,7 @@ module.exports = {
 	/**
 	 * Store `presets` as `name`. Or set a specific value of a preset.
 	 * (The use of namespaces is to avoid the very unlikely case of name conflicts with deduped node_modules)
+	 * @since 2.6.0
 	 * @param {string} name
 	 * @param {options} presets
 	 * @returns {module:grappling-hook}
@@ -600,6 +620,7 @@ module.exports = {
 	/**
 	 * Retrieves presets stored as `name`. Or a specific value of a preset.
 	 * (The use of namespaces is to avoid the very unlikely case of name conflicts with deduped node_modules)
+	 * @since 2.6.0
 	 * @param {string} name
 	 * @returns {*}
 	 * @example

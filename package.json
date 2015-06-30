@@ -9,7 +9,8 @@
     "test-cov": "istanbul cover _mocha tests",
     "travis": "npm run lint && npm test",
     "coveralls": "npm run test-cov;cat ./coverage/lcov.info | coveralls",
-    "docs": "jsdoc -c jsdoc.json"
+    "docs": "jsdoc -c jsdoc.json -R README.md",
+    "gh-pages": "git subtree push --prefix docs origin gh-pages"
   },
   "repository": {
     "type": "git",
