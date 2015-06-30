@@ -2,6 +2,7 @@
 /* eslint-env node, mocha */
 
 var expect = require('must');
+var P = require('bluebird');
 
 var subject = require('../index');
 var $ = require('./fixtures');
@@ -111,6 +112,27 @@ describe('GrapplingHook#callHook', function() {
 
 		});
 
+		it('should finish all promised middleware in a correct sequence', function(done) {
+			var expected = [
+				'A (promised) setup',
+				'A (promised) done',
+				'B (promised) setup',
+				'B (promised) done',
+				'C (promised) setup',
+				'C (promised) done'
+			];
+			instance.pre('test',
+				$.factories.createPromised('A', sequence),
+				$.factories.createPromised('B', sequence),
+				$.factories.createPromised('C', sequence)
+			);
+			instance.callHook($.PRE_TEST, function() {
+				expect($.factories.toRefString(sequence)).to.eql(expected);
+				done();
+			});
+
+		});
+		
 		it('should finish "flipped" parallel middleware in a correct sequence', function(done) {
 			function flippedParallel(next, done) {
 				setTimeout(function() {
@@ -158,6 +180,8 @@ describe('GrapplingHook#callHook', function() {
 				'C (parallel) done',
 				'D (parallel) done',
 				'E (serial) done',
+				'G (promised) setup',
+				'G (promised) done',
 				'F (serial) setup',
 				'F (serial) done'
 			];
@@ -167,6 +191,7 @@ describe('GrapplingHook#callHook', function() {
 				$.factories.createParallel('C', sequence),
 				$.factories.createParallel('D', sequence),
 				$.factories.createSerial('E', sequence),
+				$.factories.createPromised('G', sequence),
 				$.factories.createSerial('F', sequence)
 			);
 			instance.callHook($.PRE_TEST, function() {
@@ -211,8 +236,21 @@ describe('GrapplingHook#callHook', function() {
 			});
 			isAsync = true;
 		});
-
-		it('should call the next middleware sync with sync serial middleware', function(done) {
+		it('should finish async even with resolved promised middleware', function(done){
+			
+			var promise = new P(function(resolve){
+				resolve();	
+			});
+			var isAsync = false;
+			instance.hook($.PRE_TEST, function(){
+				return promise;
+			}).callHook($.PRE_TEST, function(){
+				expect(isAsync).to.be.true();
+				done();
+			});
+			isAsync = true;
+		});
+		it('should call the next middleware sync with sync serial middleware', function(done){
 			var isAsync;
 			instance.hook($.PRE_TEST, function(next) {
 				isAsync = false;

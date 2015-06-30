@@ -253,11 +253,15 @@ describe('GrapplingHook#addHooks', function() {
 				'C (parallel) setup',
 				'D (serial) setup',
 				'D (serial) done',
+				'I (promised) setup',
+				'I (promised) done',
 				'C (parallel) done',
 				'A (parallel) done',
 				'method (serial) setup',
 				'method (serial) done',
 				'E (parallel) setup',
+				'J (promised) setup',
+				'J (promised) done',
 				'F (sync) done',
 				'G (serial) setup',
 				'G (serial) done',
@@ -269,9 +273,11 @@ describe('GrapplingHook#addHooks', function() {
 				$.factories.createParallel('A', sequence, 100),
 				$.factories.createSync('B', sequence),
 				$.factories.createParallel('C', sequence, 50),
-				$.factories.createSerial('D', sequence)
+				$.factories.createSerial('D', sequence),
+				$.factories.createPromised('I', sequence)
 			).post('test',
 				$.factories.createParallel('E', sequence, 100),
+				$.factories.createPromised('J', sequence),
 				$.factories.createSync('F', sequence),
 				$.factories.createSerial('G', sequence),
 				$.factories.createParallel('H', sequence, 50)

@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
+var P = require('bluebird');
 
 var Ref = function(opts) {
 	_.defaults(this, opts, {
@@ -120,8 +121,31 @@ module.exports.createSyncWithArgs = function createSyncWithArgs(name, receiver) 
 	};
 };
 
-module.exports.toRefString = function(sequence) {
-	return _.map(sequence, function(ref) {
+module.exports.createPromised = function createPromised(name, receiver){
+	var ref = new Ref({
+		name: name,
+		type: 'promised'
+	});
+	return function() {
+		var resolve;
+		var promise = new P(function(succeed, fail) {
+			resolve = succeed;
+		});
+		receiver.push(ref.clone( {
+			phase: 'setup'
+		}));
+		setTimeout(function() {
+			receiver.push(ref.clone( {
+				phase: 'done'
+			}));
+			resolve();
+		}, 0);
+		return promise;
+	};
+	
+};
+module.exports.toRefString = function(sequence){
+	return _.map(sequence, function(ref){
 		return ref.toString();
 	});
 };

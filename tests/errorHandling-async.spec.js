@@ -5,6 +5,7 @@
 var expect = require('must');
 var subject = require('../index');
 var $ = require('./fixtures');
+var P = require('bluebird');
 
 describe('async hooks: error handling', function() {
 	var instance;
@@ -98,4 +99,22 @@ describe('async hooks: error handling', function() {
 		});
 	});
 
+	describe('an error rejecting a promise', function() {
+		var promise, resolve, reject;
+		beforeEach(function() {
+			promise = new P(function(succeed, fail) {
+				resolve = succeed;
+				reject = fail;
+			});
+
+			instance.hook($.PRE_TEST, function() {
+				setTimeout(function() {
+					reject(error);
+				}, 0);
+
+				return promise;
+			});
+		});
+		testErrorHandling();
+	});
 });
