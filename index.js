@@ -173,7 +173,7 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 		};
 	};
 	async.eachSeries(middleware, function(callback, next) {
-		var d = (callback.isAsync) ? 1 : callback.length - args.length;
+		var d = callback.length - args.length;
 		switch (d) {
 			case 1: //async series
 				callback.apply(context, args.concat(next));
@@ -368,11 +368,11 @@ var methods = {
 	 * @returns {boolean}
 	 */
 	hookable: function(qualifiedHook) { //eslint-disable-line no-unused-vars
-		if(!this.__grappling.opts.strict){
+		if (!this.__grappling.opts.strict) {
 			return true;
 		}
 		var args = _.flatten(_.toArray(arguments));
-		return _.every(args, function(qualifiedHook){
+		return _.every(args, function(qualifiedHook) {
 			qualifyHook(parseHook(qualifiedHook));
 			return !!this.__grappling.middleware[qualifiedHook];
 		}, this);
