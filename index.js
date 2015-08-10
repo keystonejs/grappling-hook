@@ -44,7 +44,7 @@
 var _ = require('lodash');
 var async = require('async');
 
-var cache = {};
+var presets = {};
 
 function parseHook(hook) {
 	var parsed = (hook) ? hook.split(':') : [];
@@ -593,7 +593,7 @@ module.exports = {
 	 * (The use of namespaces is to avoid the very unlikely case of name conflicts with deduped node_modules)
 	 * @since 2.6.0
 	 * @param {string} name
-	 * @param {options} presets
+	 * @param {options} options
 	 * @returns {module:grappling-hook}
 	 * @example
 	 * //index.js - declaration
@@ -612,8 +612,8 @@ module.exports = {
 	 * grappling.set('grapplinghook:example.qualifiers.pre', 'first');
 	 * grappling.set('grapplinghook:example.qualifiers.post', 'last');
 	 */
-	set: function(name, presets) {
-		_.set(cache, name, presets);
+	set: function(name, options) {
+		_.set(presets, name, options);
 		return module.exports;
 	},
 
@@ -631,6 +631,6 @@ module.exports = {
 	 * grappling.get('grapplinghook:example');
 	 */
 	get: function(name) {
-		return _.get(cache, name);
+		return _.get(presets, name);
 	}
 };
