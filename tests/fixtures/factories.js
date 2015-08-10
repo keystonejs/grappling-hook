@@ -2,17 +2,17 @@
 
 var _ = require('lodash');
 
-var Ref = function(opts){
+var Ref = function(opts) {
 	_.defaults(this, opts, {
 		phase: 'initialized'
 	});
 };
 
-Ref.prototype.clone = function(opts){
+Ref.prototype.clone = function(opts) {
 	return new Ref(_.defaults(opts, this));
 };
 
-Ref.prototype.toString = function(){
+Ref.prototype.toString = function() {
 	return this.name + ' (' + this.type + ') ' + this.phase;
 };
 
@@ -22,11 +22,11 @@ module.exports.createParallel = function createParallel(name, receiver, timeout)
 		type: 'parallel'
 	});
 	return function(next, done) {
-		receiver.push(ref.clone( {
+		receiver.push(ref.clone({
 			phase: 'setup'
 		}));
 		setTimeout(function() {
-			receiver.push(ref.clone( {
+			receiver.push(ref.clone({
 				phase: 'done'
 			}));
 			done();
@@ -42,12 +42,12 @@ module.exports.createParallelWithArgs = function createParallelWithArgs(name, re
 		payload: undefined
 	});
 	return function(foo, bar, next, done) {
-		receiver.push(ref.clone( {
+		receiver.push(ref.clone({
 			phase: 'setup',
 			payload: [foo, bar]
 		}));
 		setTimeout(function() {
-			receiver.push(ref.clone( {
+			receiver.push(ref.clone({
 				phase: 'done',
 				payload: [foo, bar]
 			}));
@@ -63,11 +63,11 @@ module.exports.createSerial = function createSerial(name, receiver) {
 		type: 'serial'
 	});
 	return function(next) {
-		receiver.push(ref.clone( {
+		receiver.push(ref.clone({
 			phase: 'setup'
 		}));
 		setTimeout(function() {
-			receiver.push(ref.clone( {
+			receiver.push(ref.clone({
 				phase: 'done'
 			}));
 			next();
@@ -81,12 +81,12 @@ module.exports.createSerialWithArgs = function createSerialWithArgs(name, receiv
 		type: 'serial'
 	});
 	return function(foo, bar, next) {
-		receiver.push(ref.clone( {
+		receiver.push(ref.clone({
 			phase: 'setup',
 			payload: [foo, bar]
 		}));
 		setTimeout(function() {
-			receiver.push(ref.clone( {
+			receiver.push(ref.clone({
 				phase: 'done',
 				payload: [foo, bar]
 			}));
@@ -101,7 +101,7 @@ module.exports.createSync = function createSync(name, receiver) {
 		type: 'sync'
 	});
 	return function() {
-		receiver.push(ref.clone( {
+		receiver.push(ref.clone({
 			phase: 'done'
 		}));
 	};
@@ -113,15 +113,15 @@ module.exports.createSyncWithArgs = function createSyncWithArgs(name, receiver) 
 		type: 'sync'
 	});
 	return function(foo, bar) {
-		receiver.push(ref.clone( {
+		receiver.push(ref.clone({
 			phase: 'done',
 			payload: [foo, bar]
 		}));
 	};
 };
 
-module.exports.toRefString = function(sequence){
-	return _.map(sequence, function(ref){
+module.exports.toRefString = function(sequence) {
+	return _.map(sequence, function(ref) {
 		return ref.toString();
 	});
 };

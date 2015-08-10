@@ -13,7 +13,7 @@ describe('module.create', function() {
 	after(function() {
 		subject.set('grappling-hook:test:create', undefined);
 	});
-	
+
 	it('should be a function', function() {
 		expect(subject.create).to.be.a.function();
 	});
@@ -33,5 +33,5 @@ describe('module.create', function() {
 		var instance = subject.create('grappling-hook:test:create', {qualifiers: {pre: 'overriddenPre'}});
 		expect(instance.__grappling.opts.qualifiers.pre).to.equal('overriddenPre');
 	});
-	
+
 });

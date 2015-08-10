@@ -1,8 +1,8 @@
 'use strict';
 
-module.exports = function(value){
+module.exports = function(value) {
 	return {
-		now: function(){
+		now: function() {
 			return value;
 		}
 	};

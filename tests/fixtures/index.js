@@ -2,17 +2,17 @@ var _ = require('lodash');
 
 module.exports = require('require-directory')(module);
 module.exports.MEMBERS = [
-//	'pre', 
-//	'post', 
-	'hook', 
-	'unhook', 
-	'allowHooks', 
-	'addHooks', 
-	'addSyncHooks', 
-	'callHook', 
-	'callSyncHook', 
-	'getMiddleware', 
-	'hasMiddleware', 
+	//	'pre', 
+	//	'post', 
+	'hook',
+	'unhook',
+	'allowHooks',
+	'addHooks',
+	'addSyncHooks',
+	'callHook',
+	'callSyncHook',
+	'getMiddleware',
+	'hasMiddleware',
 	'hookable'
 ];
 module.exports.PRE_TEST = 'pre:test';

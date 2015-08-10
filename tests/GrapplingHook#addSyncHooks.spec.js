@@ -110,7 +110,7 @@ describe('GrapplingHook#addSyncHooks', function() {
 				$.factories.createSync('A', sequence),
 				$.factories.createSync('B', sequence),
 				$.factories.createSync('C', sequence)
-			).post('test', 
+			).post('test',
 				$.factories.createSync('D', sequence),
 				$.factories.createSync('E', sequence)
 			);
@@ -123,7 +123,7 @@ describe('GrapplingHook#addSyncHooks', function() {
 		beforeEach(function() {
 			instance = subject.create();
 		});
-	
+
 		it('should pass all parameters to sync pre middleware; #11', function() {
 			var passed;
 			var a = 1;
@@ -151,5 +151,5 @@ describe('GrapplingHook#addSyncHooks', function() {
 			expect(passed).to.eql([a, b]);
 		});
 	});
-	
+
 });
