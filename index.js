@@ -574,7 +574,7 @@ module.exports = {
 	 * };
 	 * grappling.attach(Clazz); // attach grappling-hook functionality to a 'class'
 	 */
-	attach: function attach(clazz, presets, opts) {
+	attach: function attach(clazz, presets, opts) {//eslint-disable-line no-unused-vars
 		var args = _.toArray(arguments);
 		args.shift();
 		var proto = (clazz.prototype) ? clazz.prototype : clazz;

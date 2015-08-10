@@ -4,7 +4,6 @@
 var expect = require('must');
 
 var subject = require('../index');
-var $ = require('./fixtures');
 
 describe('module.get', function() {
 	it('should be a function', function() {
