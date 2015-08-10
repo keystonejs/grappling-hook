@@ -121,31 +121,31 @@ module.exports.createSyncWithArgs = function createSyncWithArgs(name, receiver) 
 	};
 };
 
-module.exports.createThenable = function createThenable(name, receiver){
+module.exports.createThenable = function createThenable(name, receiver) {
 	var ref = new Ref({
 		name: name,
 		type: 'thenable'
 	});
 	return function() {
 		var resolve;
-		var thenable = new P(function(succeed, fail) {
+		var thenable = new P(function(succeed, fail) {//eslint-disable-line no-unused-vars
 			resolve = succeed;
 		});
-		receiver.push(ref.clone( {
+		receiver.push(ref.clone({
 			phase: 'setup'
 		}));
 		setTimeout(function() {
-			receiver.push(ref.clone( {
+			receiver.push(ref.clone({
 				phase: 'done'
 			}));
 			resolve();
 		}, 0);
 		return thenable;
 	};
-	
+
 };
-module.exports.toRefString = function(sequence){
-	return _.map(sequence, function(ref){
+module.exports.toRefString = function(sequence) {
+	return _.map(sequence, function(ref) {
 		return ref.toString();
 	});
 };

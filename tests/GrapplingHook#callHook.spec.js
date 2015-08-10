@@ -132,7 +132,7 @@ describe('GrapplingHook#callHook', function() {
 			});
 
 		});
-		
+
 		it('should finish "flipped" parallel middleware in a correct sequence', function(done) {
 			function flippedParallel(next, done) {
 				setTimeout(function() {
@@ -236,21 +236,21 @@ describe('GrapplingHook#callHook', function() {
 			});
 			isAsync = true;
 		});
-		it('should finish async even with resolved thenable middleware', function(done){
-			
-			var promise = new P(function(resolve){
-				resolve();	
+		it('should finish async even with resolved thenable middleware', function(done) {
+
+			var promise = new P(function(resolve) {
+				resolve();
 			});
 			var isAsync = false;
-			instance.hook($.PRE_TEST, function(){
+			instance.hook($.PRE_TEST, function() {
 				return promise;
-			}).callHook($.PRE_TEST, function(){
+			}).callHook($.PRE_TEST, function() {
 				expect(isAsync).to.be.true();
 				done();
 			});
 			isAsync = true;
 		});
-		it('should call the next middleware sync with sync serial middleware', function(done){
+		it('should call the next middleware sync with sync serial middleware', function(done) {
 			var isAsync;
 			instance.hook($.PRE_TEST, function(next) {
 				isAsync = false;

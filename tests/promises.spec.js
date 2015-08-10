@@ -53,5 +53,5 @@ describe('-- promises --', function() {
 			reject(error);
 		});
 	});
-	
+
 });

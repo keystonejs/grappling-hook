@@ -100,7 +100,7 @@ describe('async hooks: error handling', function() {
 	});
 
 	describe('an error rejecting a promise', function() {
-		var promise, resolve, reject;
+		var promise, resolve, reject;//eslint-disable-line no-unused-vars
 		beforeEach(function() {
 			promise = new P(function(succeed, fail) {
 				resolve = succeed;
