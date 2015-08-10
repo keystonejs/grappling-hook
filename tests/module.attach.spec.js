@@ -10,6 +10,12 @@ var Clazz = function() {
 };
 
 describe('module.attach', function() {
+	before(function() {
+		subject.set('grappling-hook:test:attach', {strict: false, qualifiers: {pre: 'presetPre', post: 'presetPost'}});
+	});
+	after(function() {
+		subject.set('grappling-hook:test:attach', undefined);
+	});
 	it('should be a function', function() {
 		expect(subject.attach).to.be.a.function();
 	});
@@ -42,5 +48,23 @@ describe('module.attach', function() {
 		i2.allowHooks('pre:test2');
 		expect(i1.hookable('pre:test2')).to.be.false();
 		expect(i2.hookable('pre:test1')).to.be.false();
+	});
+	it('should use presets if provided', function() {
+		subject.attach(Clazz, 'grappling-hook:test:attach');
+		var instance = new Clazz();
+		instance.hasMiddleware('pre:enforceInitialization'); // enforces lazy initialization
+		expect(instance.__grappling.opts.strict).to.be.false();
+	});
+	it('should use options if provided', function() {
+		subject.attach(Clazz, {strict: false});
+		var instance = new Clazz();
+		instance.hasMiddleware('pre:enforceInitialization'); // enforces lazy initialization
+		expect(instance.__grappling.opts.strict).to.be.false();
+	});
+	it('should override presets if options are provided', function() {
+		subject.attach(Clazz, 'grappling-hook:test:attach', {qualifiers: {pre: 'overriddenPre'}});
+		var instance = new Clazz();
+		instance.hasMiddleware('pre:enforceInitialization'); // enforces lazy initialization
+		expect(instance.__grappling.opts.qualifiers.pre).to.equal('overriddenPre');
 	});
 });
