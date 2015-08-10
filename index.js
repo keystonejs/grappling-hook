@@ -575,10 +575,12 @@ module.exports = {
 	 * grappling.attach(Clazz); // attach grappling-hook functionality to a 'class'
 	 */
 	attach: function attach(clazz, presets, opts) {
+		var args = _.toArray(arguments);
+		args.shift();
 		var proto = (clazz.prototype) ? clazz.prototype : clazz;
 		_.each(methods, function(fn, methodName) {
 			proto[methodName] = function() {
-				init.call(this, presets, opts);
+				init.apply(this, args);
 				_.each(methods, function(fn, methodName) {
 					this[methodName] = fn.bind(this);
 				}, this);
