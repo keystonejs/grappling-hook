@@ -4,19 +4,24 @@
  * Middleware are callbacks that will be executed when a hook is called. The type of middleware is determined through the parameters it declares.
  * @example
  * function(){
- * 	//synchronous execution
+ *   //synchronous execution
+ * }
+ * @example
+ * function(){
+ *   //create promise, i.e. further execution is halted until the promise is resolved.
+ *   return promise;
  * }
  * @example
  * function(next){
- * 	//asynchronous execution, i.e. further execution is halted until `next` is called.
- * 	setTimeout(next, 1000);
+ *   //asynchronous execution, i.e. further execution is halted until `next` is called.
+ *   setTimeout(next, 1000);
  * }
  * @example
  * function(next, done){
- * 	//asynchronous execution, i.e. further execution is halted until `next` is called.
- * 	setTimeout(next, 1000);
- * 	//full middleware queue handling is halted until `done` is called.
- * 	setTimeout(done, 2000);
+ *   //asynchronous execution, i.e. further execution is halted until `next` is called.
+ *   setTimeout(next, 1000);
+ *   //full middleware queue handling is halted until `done` is called.
+ *   setTimeout(done, 2000);
  * }
  * @callback middleware
  * @param {...*} [parameters] - parameters passed to the hook
@@ -30,6 +35,7 @@
  * @property {Object} [qualifiers]
  * @property {String} [qualifiers.pre='pre'] - Declares the 'pre' qualifier
  * @property {String} [qualifiers.post='post'] - Declares the 'post' qualifier
+ * @property {Function} [createThenable=undefined] - Set a Promise A+ compliant factory function for creating promises.
  * @example
  * //creates a GrapplingHook instance with `before` and `after` hooking
  * var instance = grappling.create({
@@ -39,6 +45,22 @@
  *   }
  * });
  * instance.before('save', console.log);
+ * @example
+ * //creates a GrapplingHook instance with a promise factory
+ * var P = require('bluebird');
+ * var instance = grappling.create({
+ *   createThenable: function(fn){
+ *     return new P(fn);
+ *   }
+ * });
+ * instance.allowHooks('save');
+ * instance.pre('save', console.log);
+ * instance.callThenableHook('pre:save', 'Here we go!').then(function(){
+ *   console.log('And finish!');
+ * });
+ * //outputs:
+ * //Here we go!
+ * //And finish!
  */
 
 var _ = require('lodash');
@@ -129,7 +151,8 @@ function init(name, opts) {
 			qualifiers: {
 				pre: 'pre',
 				post: 'post'
-			}
+			},
+			createThenable: undefined //added for clarity
 		})
 	};
 	var q = this.__grappling.opts.qualifiers;
@@ -360,6 +383,7 @@ var methods = {
 	 *   console.log('before saving');
 	 *   next();
 	 * }
+	 * @returns {GrapplingHook}
 	 */
 	hook: function() {
 		var args = _.toArray(arguments);
@@ -385,6 +409,7 @@ var methods = {
 	 * instance.unhook();
 	 * @param {String} [hook] - (qualified) hooks e.g. `pre:save` or `save`
 	 * @param {(...middleware|middleware[])} [middleware] - function(s) to be removed
+	 * @returns {GrapplingHook}
 	 */
 	unhook: function() {
 		var fns = _.toArray(arguments);
@@ -429,6 +454,7 @@ var methods = {
 	 * Explicitly declare hooks
 	 * @instance
 	 * @param {(...string|string[])} hooks - (qualified) hooks e.g. `pre:save` or `save`
+	 * @returns {GrapplingHook}
 	 */
 	allowHooks: function() {
 		var args = _.flatten(_.toArray(arguments));
@@ -456,6 +482,7 @@ var methods = {
 	 * Wraps asynchronous methods/functions with `pre` and/or `post` hooks
 	 * @instance
 	 * @see {@link GrapplingHook#addSyncHooks} for wrapping synchronous methods
+	 * @see {@link GrapplingHook#addThenableHooks} for wrapping thenable methods
 	 * @example
 	 * //wrap existing methods
 	 * instance.addHooks('save', 'pre:remove');
@@ -468,6 +495,7 @@ var methods = {
 	 *   }
 	 * });
 	 * @param {(...String|String[]|...Object|Object[])} methods - method(s) that need(s) to emit `pre` and `post` events
+	 * @returns {GrapplingHook}
 	 */
 	addHooks: function() {
 		var config = addHooks(this, _.flatten(_.toArray(arguments)));
@@ -480,7 +508,9 @@ var methods = {
 	 * @since 2.4.0
 	 * @instance
 	 * @see {@link GrapplingHook#addHooks} for wrapping asynchronous methods
+	 * @see {@link GrapplingHook#addThenableHooks} for wrapping thenable methods
 	 * @param {(...String|String[]|...Object|Object[])} methods - method(s) that need(s) to emit `pre` and `post` events
+	 * @returns {GrapplingHook}
 	 */
 	addSyncHooks: function() {
 		var config = addHooks(this, _.flatten(_.toArray(arguments)));
@@ -488,6 +518,15 @@ var methods = {
 		return this;
 	},
 
+	/**
+	 * Wraps thenable methods/functions with `pre` and/or `post` hooks
+	 * @since 2.6.0
+	 * @instance
+	 * @see {@link GrapplingHook#addHooks} for wrapping asynchronous methods
+	 * @see {@link GrapplingHook#addSyncHooks} for wrapping synchronous methods
+	 * @param {(...String|String[]|...Object|Object[])} methods - method(s) that need(s) to emit `pre` and `post` events
+	 * @returns {GrapplingHook}
+	 */
 	addThenableHooks: function() {
 		var config = addHooks(this, _.flatten(_.toArray(arguments)));
 		createThenableHooks(this, config);
@@ -498,10 +537,12 @@ var methods = {
 	 * Calls all middleware subscribed to the asynchronous `qualifiedHook` and passes remaining parameters to them
 	 * @instance
 	 * @see {@link GrapplingHook#callSyncHook} for calling synchronous hooks
+	 * @see {@link GrapplingHook#callThenableHook} for calling thenable hooks
 	 * @param {*} [context] - the context in which the middleware will be called
 	 * @param {String} qualifiedHook - qualified hook e.g. `pre:save`
 	 * @param {...*} [parameters] - any parameters you wish to pass to the middleware.
 	 * @param {Function} [callback] - will be called when all middleware have finished
+	 * @returns {GrapplingHook}
 	 */
 	callHook: function() {
 		var params = parseCallHookParams(this, _.toArray(arguments));
@@ -518,9 +559,11 @@ var methods = {
 	 * @since 2.4.0
 	 * @instance
 	 * @see {@link GrapplingHook#callHook} for calling asynchronous hooks
+	 * @see {@link GrapplingHook#callThenableHook} for calling thenable hooks
 	 * @param {*} [context] - the context in which the middleware will be called
 	 * @param {String} qualifiedHook - qualified hook e.g. `pre:save`
 	 * @param {...*} [parameters] - any parameters you wish to pass to the middleware.
+	 * @returns {GrapplingHook}
 	 */
 	callSyncHook: function() {
 		var params = parseCallHookParams(this, _.toArray(arguments));
@@ -528,6 +571,17 @@ var methods = {
 		return this;
 	},
 
+	/**
+	 * Calls all middleware subscribed to the synchronous `qualifiedHook` and passes remaining parameters to them
+	 * @since 2.6.0
+	 * @instance
+	 * @see {@link GrapplingHook#callHook} for calling asynchronous hooks
+	 * @see {@link GrapplingHook#callSyncHook} for calling synchronous hooks
+	 * @param {*} [context] - the context in which the middleware will be called
+	 * @param {String} qualifiedHook - qualified hook e.g. `pre:save`
+	 * @param {...*} [parameters] - any parameters you wish to pass to the middleware.
+	 * @returns {*} - a thenable, as created with {@link options#createThenable}
+	 */
 	callThenableHook: function() {
 		var params = parseCallHookParams(this, _.toArray(arguments));
 		var deferred = {};
@@ -596,6 +650,8 @@ methods.callAsyncHook = methods.callHook;
 module.exports = {
 	/**
 	 * Mixes {@link GrapplingHook} methods into `instance`.
+	 * @see {@link module:grappling-hook.attach attach} for attaching {@link GrapplingHook} methods to prototypes.
+	 * @see {@link module:grappling-hook.create create} for creating {@link GrapplingHook} instances.
 	 * @param {Object} instance
 	 * @param {string} [presets] - presets name, see {@link module:grappling-hook.set set}
 	 * @param {options} [opts] - {@link options}.
@@ -617,6 +673,8 @@ module.exports = {
 
 	/**
 	 * Creates an object with {@link GrapplingHook} functionality.
+	 * @see {@link module:grappling-hook.attach attach} for attaching {@link GrapplingHook} methods to prototypes.
+	 * @see {@link module:grappling-hook.mixin mixin} for mixing {@link GrapplingHook} methods into instances.
 	 * @param {string} [presets] - presets name, see {@link module:grappling-hook.set set}
 	 * @param {options} [opts] - {@link options}.
 	 * @returns {GrapplingHook}
@@ -630,6 +688,8 @@ module.exports = {
 
 	/**
 	 * Attaches {@link GrapplingHook} methods to `clazz`'s `prototype`.
+	 * @see {@link module:grappling-hook.create create} for creating {@link GrapplingHook} instances.
+	 * @see {@link module:grappling-hook.mixin mixin} for mixing {@link GrapplingHook} methods into instances.
 	 * @param {Function} clazz
 	 * @param {string} [presets] - presets name, see {@link module:grappling-hook.set set}
 	 * @param {options} [opts] - {@link options}.
@@ -665,6 +725,7 @@ module.exports = {
 	 * Store `presets` as `name`. Or set a specific value of a preset.
 	 * (The use of namespaces is to avoid the very unlikely case of name conflicts with deduped node_modules)
 	 * @since 2.6.0
+	 * @see {@link module:grappling-hook.get get} for retrieving presets
 	 * @param {string} name
 	 * @param {options} options
 	 * @returns {module:grappling-hook}
@@ -694,6 +755,7 @@ module.exports = {
 	 * Retrieves presets stored as `name`. Or a specific value of a preset.
 	 * (The use of namespaces is to avoid the very unlikely case of name conflicts with deduped node_modules)
 	 * @since 2.6.0
+	 * @see {@link module:grappling-hook.set set} for storing presets
 	 * @param {string} name
 	 * @returns {*}
 	 * @example
