@@ -308,31 +308,32 @@ function createThenableHooks(instance, config) {
 	if (!opts.createThenable || !_.isFunction(opts.createThenable)) {
 		throw new Error('Instance not set up for thenable creation, please set `opts.createThenable`');
 	}
+	var q = instance.__grappling.opts.qualifiers;
 	_.each(config, function(fn, hook) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
 			var args = _.toArray(arguments);
-			var middleware = instance.getMiddleware(opts.qualifiers.pre + ':' + hookObj.name);
 			var deferred = {};
 			var thenable = opts.createThenable(function(resolve, reject) {
 				deferred.resolve = resolve;
 				deferred.reject = reject;
 			});
-			middleware.push(function(next) {
+			async.series([function(next) {
+				iterateAsyncMiddleware(instance, instance.getMiddleware(q.pre + ':' + hookObj.name), args, next);
+			}, function(next) {
 				fn.apply(instance, args).then(function(result) {
 					deferred.result = result;
 					next();
 				}, next);
-			});
-			middleware = middleware.concat(instance.getMiddleware(opts.qualifiers.post + ':' + hookObj.name));
-			dezalgofy(function(safeDone) {
-				iterateAsyncMiddleware(instance, middleware, args, safeDone);
-			}, function(err) {
+			}, function(next) {
+				iterateAsyncMiddleware(instance, instance.getMiddleware(q.post + ':' + hookObj.name), args, next);
+			}], function(err) {
 				if (err) {
 					return deferred.reject(err);
 				}
 				return deferred.resolve(deferred.result);
 			});
+			
 			return thenable;
 		};
 	});
@@ -589,8 +590,9 @@ var methods = {
 			deferred.resolve = resolve;
 			deferred.reject = reject;
 		});
+		var self = this;
 		dezalgofy(function(safeDone) {
-			iterateAsyncMiddleware(params.context, this.getMiddleware(params.hook), params.args, safeDone);
+			iterateAsyncMiddleware(params.context, self.getMiddleware(params.hook), params.args, safeDone);
 		}, function(err) {
 			if (err) {
 				return deferred.reject(err);
