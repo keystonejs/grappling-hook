@@ -4,6 +4,7 @@
 
 var _ = require('lodash');
 var expect = require('must');
+var P = require('bluebird');
 
 var subject = require('../index');
 var $ = require('./fixtures');

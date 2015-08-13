@@ -1,10 +1,11 @@
 'use strict';
 
-var subject = require('../index');
+/* eslint-env node, mocha */
+
 var $ = require('./fixtures');
 var P = require('bluebird');
 
-module.exports = function(subject, presetsName, testErrorHandling){
+module.exports = function(subject, presetsName, testErrorHandling) {
 	var testdata = {
 		instance: undefined,
 		error: undefined
@@ -15,7 +16,6 @@ module.exports = function(subject, presetsName, testErrorHandling){
 		testdata.instance.allowHooks($.PRE_TEST);
 	});
 
-	
 	describe('an error thrown by a sync middleware', function() {
 		beforeEach(function() {
 			testdata.instance.hook($.PRE_TEST, function() {
@@ -46,7 +46,7 @@ module.exports = function(subject, presetsName, testErrorHandling){
 		});
 		testErrorHandling(testdata);
 	});
-	
+
 	describe('an error rejecting a promise', function() {
 		var promise, resolve, reject;//eslint-disable-line no-unused-vars
 		beforeEach(function() {

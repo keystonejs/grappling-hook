@@ -5,7 +5,6 @@
 var expect = require('must');
 var subject = require('../index');
 var $ = require('./fixtures');
-var P = require('bluebird');
 
 describe('async hooks: error handling', function() {
 	function testErrorHandling(testdata) {

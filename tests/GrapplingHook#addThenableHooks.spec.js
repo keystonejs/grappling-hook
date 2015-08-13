@@ -2,7 +2,6 @@
 /* eslint-env node, mocha */
 
 var expect = require('must');
-var _ = require('lodash');
 var P = require('bluebird');
 
 var subject = require('../index');
@@ -39,10 +38,10 @@ describe('GrapplingHook#addThenableHooks', function() {
 			var actual = instance.addThenableHooks($.PRE_TEST);
 			expect(actual).to.equal(instance);
 		});
-		it('should throw an error if thenable creation is not set up', function(){
+		it('should throw an error if thenable creation is not set up', function() {
 			instance = subject.create();
 			instance.test = original;
-			expect(function(){
+			expect(function() {
 				instance.addThenableHooks($.PRE_TEST);
 			}).to.throw(/opts.createThenable/);
 		});
@@ -177,7 +176,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 			var passed;
 			var a = 1;
 			var b = 'b';
-			instance.test = function(a, b) {
+			instance.test = function() {
 				return P.resolve();
 			};
 			instance.addThenableHooks('test')
@@ -185,7 +184,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 					passed = [a, b];
 					next();
 				})
-				.test(a, b).then( function() {
+				.test(a, b).then(function() {
 					expect(passed).to.eql([a, b]);
 					done();
 				});
@@ -194,7 +193,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 			var passed;
 			var a = 1;
 			var b = 'b';
-			instance.test = function(a, b) {
+			instance.test = function() {
 				return P.resolve();
 			};
 			instance.addThenableHooks('test')
@@ -203,7 +202,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 					next();
 					done();
 				})
-				.test(a, b).then( function() {
+				.test(a, b).then(function() {
 					expect(passed).to.eql([a, b]);
 					done();
 				});
@@ -212,7 +211,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 			var passed;
 			var a = 1;
 			var b = 'b';
-			instance.test = function(a, b) {
+			instance.test = function() {
 				return P.resolve();
 			};
 			instance.addThenableHooks('test')
@@ -220,7 +219,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 					passed = [a, b];
 					return P.resolve();
 				})
-				.test(a, b).then( function() {
+				.test(a, b).then(function() {
 					expect(passed).to.eql([a, b]);
 					done();
 				});
@@ -259,7 +258,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 			var passed;
 			var a = 1;
 			var b = 'b';
-			instance.test = function(a, b) {
+			instance.test = function() {
 				return P.resolve();
 			};
 			instance.addThenableHooks('test')
@@ -267,7 +266,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 					passed = [a, b];
 					next();
 				})
-				.test(a, b).then( function() {
+				.test(a, b).then(function() {
 					expect(passed).to.eql([a, b]);
 					done();
 				});
@@ -276,7 +275,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 			var passed;
 			var a = 1;
 			var b = 'b';
-			instance.test = function(a, b) {
+			instance.test = function() {
 				return P.resolve();
 			};
 			instance.addThenableHooks('test')
@@ -285,7 +284,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 					next();
 					done();
 				})
-				.test(a, b).then( function() {
+				.test(a, b).then(function() {
 					expect(passed).to.eql([a, b]);
 					done();
 				});
@@ -294,7 +293,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 			var passed;
 			var a = 1;
 			var b = 'b';
-			instance.test = function(a, b) {
+			instance.test = function() {
 				return P.resolve();
 			};
 			instance.addThenableHooks('test')
@@ -302,7 +301,7 @@ describe('GrapplingHook#addThenableHooks', function() {
 					passed = [a, b];
 					return P.resolve();
 				})
-				.test(a, b).then( function() {
+				.test(a, b).then(function() {
 					expect(passed).to.eql([a, b]);
 					done();
 				});

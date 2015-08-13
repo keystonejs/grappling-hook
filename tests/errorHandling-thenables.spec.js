@@ -89,7 +89,7 @@ describe('thenable hooks: error handling', function() {
 					test: function() {
 						return P.resolve();
 					}
-				})
+				});
 			});
 			it('should fail the final promise', function(done) {
 				testdata.instance.test()

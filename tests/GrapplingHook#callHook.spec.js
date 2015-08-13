@@ -7,7 +7,8 @@ var P = require('bluebird');
 var subject = require('../index');
 var $ = require('./fixtures');
 
-var NOOP = function(){};
+var NOOP = function() {
+};
 
 describe('GrapplingHook#callHook', function() {
 	describe('API', function() {
