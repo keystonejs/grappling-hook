@@ -114,6 +114,7 @@ function attachQualifier(instance, qualifier) {
 	 * instance.pre('save', function(){
 	 *   console.log('before saving');
 	 * });
+	 * @see {@link GrapplingHook#post} for registering middleware functions to `post` hooks.
 	 */
 	/**
 	 * Registers `middleware` to be executed _after_ `hook`.
@@ -127,6 +128,7 @@ function attachQualifier(instance, qualifier) {
 	 * instance.post('save', function(){
 	 *   console.log('after saving');
 	 * });
+	 * @see {@link GrapplingHook#pre} for registering middleware functions to `post` hooks.
 	 */
 	instance[qualifier] = function() {
 		var args = _.toArray(arguments);

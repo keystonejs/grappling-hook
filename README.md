@@ -10,7 +10,8 @@ A number of modules already exist that allow you to do just the same, but the mo
 Also, we wanted a more granular control of the hooking process and the way middleware is called.
 
 **NEW:**
- 
+
+* since v2.6 you can [use promises as middleware] and [wrap promise-returning methods]
 * since v2.4 you can [wrap sync methods](#adding-hooks-to-synchronized-methods) and [call sync hooks](#synchronized-hooks).
 * since v2.3 you can [configure `grappling-hook` to use other method names](#other-qualifiers) than `pre` or `post`, e.g. `before` and `after`.
 
@@ -22,8 +23,75 @@ $ npm install grappling-hook
 
 ## Usage
 
+`grappling-hook` exposes two different API's:
 
-#### Creating a `grappling-hook` object
+1. a consumer-facing API, i.e. it allows you to add middleware functions to pre/post hooks.
+1. a producer-facing API, i.e. it allows you to create hooks, wrap methods with hooks, et cetera. 
+
+### Consumer-facing API
+
+Allows you to add/remove middleware functions to hooks.
+
+(Sidenote: all consumer-facing methods exist out of a single word)
+
+* [GrapplingHook#pre][GrapplingHook#pre]
+* [GrapplingHook#post][GrapplingHook#post]
+* [GrapplingHook#hook][GrapplingHook#hook]
+* [GrapplingHook#unhook][GrapplingHook#unhook]
+* [GrapplingHook#hookable][GrapplingHook#hookable]
+
+### Producer-facing API
+
+The `grappling-hook` module provides 3 ways to create `GrapplingHook` objects, see:
+
+* [grappling-hook.create][grappling-hook.create] on how to create vanilla `GrapplingHook` objects.
+* [grappling-hook.mixin][grappling-hook.mixin] on how to add `GrapplingHook` functionality to existing objects.
+* [grappling-hook.attach][grappling-hook.attach] on how to add `GrapplingHook` functionality to constructors.
+
+By default `GrapplingHook` hooks need to be either explicitly declared with [GrapplingHook#allowHooks][GrapplingHook#allowHooks] if you want to call your hooks directly or by wrapping existing methods.
+
+`GrapplingHook` objects can have 3 kinds of hooks:
+
+#### Asynchronous hooks
+
+Asynchronous hooks **require** a callback as the final parameter. It will be called once all pre _and_ post middleware has finished. When using a wrapped method, the original (unwrapped) method will be called in between the pre and post middleware.
+
+Asynchronous hooks _always_ finish asynchronously, i.e. even if only synchronous middleware has been registered to a hook `callback` will always be called asynchronously (next tick at the earliest).
+
+Middleware added to asynchronous hooks can be synchronous, serially asynchronous, parallel asynchronous or thenable. See [middleware] for more information.
+
+See:
+
+* [GrapplingHook#addHooks][GrapplingHook#addHooks] or its alias [GrapplingHook#addAsyncHooks][GrapplingHook#addAsyncHooks] on how to wrap asynchronous methods with pre/post hooks.
+* [GrapplingHook#callHook][GrapplingHook#callHook] or its alias [GrapplingHook#callAsyncHook][GrapplingHook#callAsyncHook] on how to call an asynchronous pre or post hook directly.
+
+#### Synchronous hooks
+
+Synchronous hooks do not require a callback and allow the possibility to return values from wrapped methods.
+
+They _always_ finish synchronously, which means consumers are not allowed to register any asynchronous middleware (including thenables) to synchronous hooks.
+
+See:
+
+* [GrapplingHook#addSyncHooks][GrapplingHook#addSyncHooks] on how to wrap synchronous methods with pre/post hooks.
+* [GrapplingHook#callSyncHook][GrapplingHook#callSyncHook] on how to call a synchronous pre or post hook directly.
+
+#### Thenable hooks
+
+Thenable hooks **must** return a promise.
+
+They _always_ finish asynchronously, i.e. even if only synchronous middleware has been registered to a thenable hook the promise will be resolved asynchronously.
+
+Middleware added to thenable hooks can be synchronous, serially asynchronous, parallel asynchronous or thenable. See [middleware] for more information.
+
+See:
+
+* [GrapplingHook#addThenableHooks][GrapplingHook#addThenableHooks] on how to wrap thenable methods with pre/post hooks.
+* [GrapplingHook#callThenableHook][GrapplingHook#callThenableHook] on how to call a thenable pre or post hook directly.
+
+### Getting started
+
+#### Creating a `GrapplingHook` object
 
 You can easily add methods to a new `grappling-hook` instance which are automatically ready for hooking up middleware:
 
