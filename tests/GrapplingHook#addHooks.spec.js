@@ -172,6 +172,23 @@ describe('GrapplingHook#addHooks', function() {
 					done();
 				});
 		});
+		it('should pass all parameters to thenable pre middleware; #11', function(done) {
+			var passed;
+			var a = 1;
+			var b = 'b';
+			instance.test = function(a, b, done) {
+				done();
+			};
+			instance.addHooks('test')
+				.pre('test', function(a, b) {
+					passed = [a, b];
+					return P.resolve();
+				})
+				.test(a, b, function() {
+					expect(passed).to.eql([a, b]);
+					done();
+				});
+		});
 		it('should pass all parameters to async serial post middleware; #11', function(done) {
 			var passed;
 			var a = 1;
@@ -217,6 +234,23 @@ describe('GrapplingHook#addHooks', function() {
 			instance.addHooks('test')
 				.post('test', function(a, b) {
 					passed = [a, b];
+				})
+				.test(a, b, function() {
+					expect(passed).to.eql([a, b]);
+					done();
+				});
+		});
+		it('should pass all parameters to thenable post middleware; #11', function(done) {
+			var passed;
+			var a = 1;
+			var b = 'b';
+			instance.test = function(a, b, done) {
+				done();
+			};
+			instance.addHooks('test')
+				.pre('test', function(a, b) {
+					passed = [a, b];
+					return P.resolve();
 				})
 				.test(a, b, function() {
 					expect(passed).to.eql([a, b]);
