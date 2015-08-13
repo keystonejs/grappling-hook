@@ -546,6 +546,7 @@ var methods = {
 	 * @returns {GrapplingHook}
 	 */
 	callHook: function() {
+		//todo: decide whether we should enforce passing a callback
 		var params = parseCallHookParams(this, _.toArray(arguments));
 		params.done = (_.isFunction(params.args[params.args.length - 1])) ? params.args.pop() : null;
 		var self = this;
