@@ -7,6 +7,8 @@ var P = require('bluebird');
 var subject = require('../index');
 var $ = require('./fixtures');
 
+var NOOP = function(){};
+
 describe('GrapplingHook#callHook', function() {
 	describe('API', function() {
 		var callback,
@@ -27,37 +29,36 @@ describe('GrapplingHook#callHook', function() {
 			instance.allowHooks('test')
 				.hook($.PRE_TEST, callback);
 		});
-		it('should throw an error for an unqualified hook', function(done) {
+		it('should throw an error for an unqualified hook', function() {
 			expect(function() {
 				instance.callHook('test');
 			}).to.throw(/qualified/);
-			done();
 		});
-		it('should return the instance', function(done) {
-			var actual = instance.callHook($.PRE_TEST, foo, bar, done);
+		it('should return the instance', function() {
+			var actual = instance.callHook($.PRE_TEST, foo, bar);
 			expect(actual).to.equal(instance);
 		});
-		it('should pass `...parameters` to middleware', function(done) {
-			instance.callHook($.PRE_TEST, foo, bar, done);
+		it('should pass `...parameters` to middleware', function() {
+			instance.callHook($.PRE_TEST, foo, bar);
 			expect(passed.args).to.eql([foo, bar]);
 		});
-		it('should pass `parameters[]` to middleware', function(done) {
-			instance.callHook($.PRE_TEST, [foo, bar], done);
+		it('should pass `parameters[]` to middleware', function() {
+			instance.callHook($.PRE_TEST, [foo, bar]);
 			expect(passed.args).to.eql([foo, bar]);
 		});
-		it('should pass functions as parameters to middleware', function(done) {
-			var f = function() {
+		it('should pass functions as parameters to middleware', function() {
+			var f = function funcParam() {
 			};
-			instance.callHook($.PRE_TEST, [foo, f], done);
+			instance.callHook($.PRE_TEST, [foo, f], NOOP);
 			expect(passed.args).to.eql([foo, f]);
 		});
-		it('should execute middleware in scope `context`', function(done) {
+		it('should execute middleware in scope `context`', function() {
 			var context = {};
-			instance.callHook(context, $.PRE_TEST, [foo, bar], done);
+			instance.callHook(context, $.PRE_TEST, [foo, bar]);
 			expect(passed.scope).to.equal(context);
 		});
-		it('should execute middleware in scope `instance` by default', function(done) {
-			instance.callHook($.PRE_TEST, [foo, bar], done);
+		it('should execute middleware in scope `instance` by default', function() {
+			instance.callHook($.PRE_TEST, [foo, bar]);
 			expect(passed.scope).to.equal(instance);
 		});
 	});
