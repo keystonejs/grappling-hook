@@ -46,7 +46,7 @@ describe('thenable hooks: error handling', function() {
 					.hook($.PRE_TEST, function(next, done) {
 						setTimeout(function() {
 							done(error);
-						}, 0);
+						}, 50);
 					})
 					.callThenableHook($.PRE_TEST)
 					.catch(function(actual) {
@@ -67,7 +67,7 @@ describe('thenable hooks: error handling', function() {
 						setTimeout(function() {
 							parallelFinished = true;
 							done();
-						}, 0);
+						}, 50);
 						next();
 					})
 					.hook($.PRE_TEST, function(next) {
@@ -126,7 +126,7 @@ describe('thenable hooks: error handling', function() {
 					.hook($.PRE_TEST, function(next, done) {
 						setTimeout(function() {
 							done(error);
-						}, 0);
+						}, 50);
 					})
 					.test()
 					.catch(function(actual) {
@@ -151,7 +151,7 @@ describe('thenable hooks: error handling', function() {
 						setTimeout(function() {
 							parallelFinished = true;
 							done();
-						}, 0);
+						}, 50);
 						next();
 					})
 					.hook($.PRE_TEST, function(next) {

@@ -23,9 +23,15 @@ describe('module.attach', function() {
 		var ModifiedClazz = subject.attach(Clazz);
 		expect(ModifiedClazz).to.equal(Clazz);
 	});
-	it('should add grappling-hook methods to the prototype', function() {
+	it('should add grappling-hook methods to the prototype of a function', function() {
 		var ModifiedClazz = subject.attach(Clazz),
 			instance = new ModifiedClazz();
+		expect(instance).to.be.an.instanceOf(Clazz);
+		expect($.isGrapplingHook(instance)).to.be.true();
+	});
+	it('should add grappling-hook methods to function.prototype', function() {
+		var proto = subject.attach(Clazz.prototype),
+			instance = new proto.constructor();
 		expect(instance).to.be.an.instanceOf(Clazz);
 		expect($.isGrapplingHook(instance)).to.be.true();
 	});
