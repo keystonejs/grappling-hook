@@ -63,14 +63,17 @@
  * //And finish!
  */
 
+/**
+ * 
+ * @typedef {Object} thenable
+ * @property {Function} then - see Promises A+ spec
+ * @see {@link options}.createThenable
+ */
+
 var _ = require('lodash');
 var async = require('async');
 
 var presets = {};
-
-function isThenable(subject) {
-	return subject && subject.then;
-}
 
 function parseHook(hook) {
 	var parsed = (hook) ? hook.split(':') : [];
@@ -104,7 +107,7 @@ function addMiddleware(instance, hook, args) {
 function attachQualifier(instance, qualifier) {
 	/**
 	 * Registers `middleware` to be executed _before_ `hook`.
-	 * This is a dynamically added method, that may not be present if otherwise configured in {@link options}.
+	 * This is a dynamically added method, that may not be present if otherwise configured in {@link options}.qualifiers.
 	 * @method pre
 	 * @instance
 	 * @memberof GrapplingHook
@@ -118,12 +121,13 @@ function attachQualifier(instance, qualifier) {
 	 */
 	/**
 	 * Registers `middleware` to be executed _after_ `hook`.
-	 * This is a dynamically added method, that may not be present if otherwise configured in {@link options}.
+	 * This is a dynamically added method, that may not be present if otherwise configured in {@link options}.qualifiers.
 	 * @method post
 	 * @instance
 	 * @memberof GrapplingHook
 	 * @param {string} hook - hook name, e.g. `'save'`
 	 * @param {...middleware|middleware[]} middleware - middleware to register
+	 * @returns {GrapplingHook|thenable}
 	 * @example
 	 * instance.post('save', function(){
 	 *   console.log('after saving');
@@ -131,9 +135,18 @@ function attachQualifier(instance, qualifier) {
 	 * @see {@link GrapplingHook#pre} for registering middleware functions to `post` hooks.
 	 */
 	instance[qualifier] = function() {
-		var args = _.toArray(arguments);
-		addMiddleware(this, qualifier + ':' + args.shift(), args);
-		return this;
+		var fns = _.toArray(arguments);
+		var hookName = fns.shift();
+		var output;
+		if(fns.length){ //old skool way with callbacks
+			output = this;
+		}else{
+			output = this.__grappling.opts.createThenable(function(resolve){
+				fns = [resolve];
+			});
+		}
+		addMiddleware(this, qualifier + ':' + hookName, fns);
+		return output;
 	};
 }
 
@@ -154,7 +167,9 @@ function init(name, opts) {
 				pre: 'pre',
 				post: 'post'
 			},
-			createThenable: undefined //added for clarity
+			createThenable: function(){
+				throw new Error('Instance not set up for thenable creation, please set `opts.createThenable`');
+			}
 		})
 	};
 	var q = this.__grappling.opts.qualifiers;
@@ -219,7 +234,7 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 				} catch (e) {
 					err = e;
 				}
-				if (!err && isThenable(result)) {
+				if (!err && module.exports.isThenable(result)) {
 					//thenable
 					result.then(function() {
 						next();
@@ -307,9 +322,6 @@ function createSyncHooks(instance, config) {
 
 function createThenableHooks(instance, config) {
 	var opts = instance.__grappling.opts;
-	if (!opts.createThenable || !_.isFunction(opts.createThenable)) {
-		throw new Error('Instance not set up for thenable creation, please set `opts.createThenable`');
-	}
 	var q = instance.__grappling.opts.qualifiers;
 	_.each(config, function(fn, hook) {
 		var hookObj = parseHook(hook);
@@ -363,7 +375,7 @@ function parseCallHookParams(instance, args) {
 	return {
 		context: (_.isString(args[0])) ? instance : args.shift(),
 		hook: args.shift(),
-		args: _.flatten(args)
+		args: args
 	};
 }
 
@@ -386,13 +398,22 @@ var methods = {
 	 *   console.log('before saving');
 	 *   next();
 	 * }
-	 * @returns {GrapplingHook}
+	 * @returns {GrapplingHook|thenable}
 	 */
 	hook: function() {
-		var args = _.toArray(arguments);
-		qualifyHook(parseHook(args[0]));
-		addMiddleware(this, args.shift(), args);
-		return this;
+		var fns = _.toArray(arguments);
+		var hook = fns.shift();
+		var output;
+		qualifyHook(parseHook(hook));
+		if(fns.length){
+			output=this;
+		}else{
+			output = this.__grappling.opts.createThenable(function(resolve){
+				fns = [resolve];
+			});
+		}
+		addMiddleware(this, hook, fns);
+		return output;
 	},
 
 	/**
@@ -523,7 +544,7 @@ var methods = {
 
 	/**
 	 * Wraps thenable methods/functions with `pre` and/or `post` hooks
-	 * @since 2.6.0
+	 * @since 3.0.0
 	 * @instance
 	 * @see {@link GrapplingHook#addHooks} for wrapping asynchronous methods
 	 * @see {@link GrapplingHook#addSyncHooks} for wrapping synchronous methods
@@ -551,10 +572,14 @@ var methods = {
 		//todo: decide whether we should enforce passing a callback
 		var params = parseCallHookParams(this, _.toArray(arguments));
 		params.done = (_.isFunction(params.args[params.args.length - 1])) ? params.args.pop() : null;
-		var self = this;
-		dezalgofy(function(safeDone) {
-			iterateAsyncMiddleware(params.context, self.getMiddleware(params.hook), params.args, safeDone);
-		}, params.done);
+		if(params.done){
+			var self = this;
+			dezalgofy(function(safeDone) {
+				iterateAsyncMiddleware(params.context, self.getMiddleware(params.hook), params.args, safeDone);
+			}, params.done);
+		}else{
+			iterateAsyncMiddleware(params.context, this.getMiddleware(params.hook), params.args);
+		}
 		return this;
 	},
 
@@ -577,14 +602,14 @@ var methods = {
 
 	/**
 	 * Calls all middleware subscribed to the synchronous `qualifiedHook` and passes remaining parameters to them
-	 * @since 2.6.0
+	 * @since 3.0.0
 	 * @instance
 	 * @see {@link GrapplingHook#callHook} for calling asynchronous hooks
 	 * @see {@link GrapplingHook#callSyncHook} for calling synchronous hooks
 	 * @param {*} [context] - the context in which the middleware will be called
 	 * @param {String} qualifiedHook - qualified hook e.g. `pre:save`
 	 * @param {...*} [parameters] - any parameters you wish to pass to the middleware.
-	 * @returns {*} - a thenable, as created with {@link options#createThenable}
+	 * @returns {thenable} - a thenable, as created with {@link options}.createThenable
 	 */
 	callThenableHook: function() {
 		var params = parseCallHookParams(this, _.toArray(arguments));
@@ -633,7 +658,7 @@ var methods = {
 
 /**
  * alias for {@link GrapplingHook#addHooks}.
- * @since 2.6.0
+ * @since 3.0.0
  * @name GrapplingHook#addAsyncHooks
  * @instance
  * @method
@@ -641,7 +666,7 @@ var methods = {
 methods.addAsyncHooks = methods.addHooks;
 /**
  * alias for {@link GrapplingHook#callHook}.
- * @since 2.6.0
+ * @since 3.0.0
  * @name GrapplingHook#callAsyncHook
  * @instance
  * @method
@@ -729,7 +754,7 @@ module.exports = {
 	/**
 	 * Store `presets` as `name`. Or set a specific value of a preset.
 	 * (The use of namespaces is to avoid the very unlikely case of name conflicts with deduped node_modules)
-	 * @since 2.6.0
+	 * @since 3.0.0
 	 * @see {@link module:grappling-hook.get get} for retrieving presets
 	 * @param {string} name
 	 * @param {options} options
@@ -759,7 +784,7 @@ module.exports = {
 	/**
 	 * Retrieves presets stored as `name`. Or a specific value of a preset.
 	 * (The use of namespaces is to avoid the very unlikely case of name conflicts with deduped node_modules)
-	 * @since 2.6.0
+	 * @since 3.0.0
 	 * @see {@link module:grappling-hook.set set} for storing presets
 	 * @param {string} name
 	 * @returns {*}
@@ -772,5 +797,15 @@ module.exports = {
 	 */
 	get: function(name) {
 		return _.get(presets, name);
+	},
+
+	/**
+	 * Determines whether `subject` is a {@link thenable}.
+	 * @param {*} subject
+	 * @returns {Boolean}
+	 * @see {@link thenable}
+	 */
+	isThenable: function isThenable(subject) {
+		return subject && subject.then && _.isFunction(subject.then);
 	}
 };
