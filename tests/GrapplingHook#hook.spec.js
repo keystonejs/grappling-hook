@@ -3,15 +3,23 @@
 
 var expect = require('must');
 var sinon = require('sinon');
+var P = require('bluebird');
+
 var subject = require('../index');
 var $ = require('./fixtures');
+
+var NOOP = function(){};
 
 describe('GrapplingHook#hook', function() {
 	var instance;
 	var callback;
 	beforeEach(function() {
 		callback = sinon.spy();
-		instance = subject.create();
+		instance = subject.create({
+			createThenable: function(fn) {
+				return new P(fn);
+			}
+		});
 		instance.allowHooks('test');
 	});
 	it('should throw an error for unqualified hooks', function() {
@@ -24,9 +32,13 @@ describe('GrapplingHook#hook', function() {
 			instance.hook('pre:notAllowed');
 		}).to.throw(/not supported/);
 	});
-	it('should return the instance', function() {
-		var actual = instance.hook($.PRE_TEST);
+	it('should return the instance when a callback is provided', function() {
+		var actual = instance.hook($.PRE_TEST, NOOP);
 		expect(actual).to.equal(instance);
+	});
+	it('should return a thenable when a callback is not provided', function() {
+		var actual = instance.hook($.PRE_TEST);
+		expect(subject.isThenable(actual)).to.be.true();
 	});
 	it('should register a single callback as middleware', function() {
 		instance.hook($.PRE_TEST, callback)

@@ -38,13 +38,6 @@ describe('GrapplingHook#addThenableHooks', function() {
 			var actual = instance.addThenableHooks($.PRE_TEST);
 			expect(actual).to.equal(instance);
 		});
-		it('should throw an error if thenable creation is not set up', function() {
-			instance = subject.create();
-			instance.test = original;
-			expect(function() {
-				instance.addThenableHooks($.PRE_TEST);
-			}).to.throw(/opts.createThenable/);
-		});
 		it('should throw an error if the parameters are not a string or object', function() {
 			expect(function() {
 				instance.addThenableHooks(666);

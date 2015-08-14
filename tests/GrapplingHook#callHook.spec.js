@@ -1,6 +1,7 @@
 'use strict';
 /* eslint-env node, mocha */
 
+var _ = require('lodash');
 var expect = require('must');
 var P = require('bluebird');
 
@@ -14,17 +15,25 @@ describe('GrapplingHook#callHook', function() {
 	describe('API', function() {
 		var callback,
 			passed,
-			foo = {},
-			bar = {};
+			foo = {
+				name: 'foo'
+			},
+			bar = {
+				name: 'bar'
+			};
 		var instance;
 		beforeEach(function() {
-			instance = subject.create();
+			instance = subject.create({
+				createThenable: function(fn) {
+					return new P(fn);
+				}
+			});
 			passed = {
 				scope: undefined,
 				args: undefined
 			};
-			callback = function(foo, bar) {
-				passed.args = [foo, bar];
+			callback = function() {
+				passed.args = _.toArray(arguments);
 				passed.scope = this;
 			};
 			instance.allowHooks('test')
@@ -43,15 +52,24 @@ describe('GrapplingHook#callHook', function() {
 			instance.callHook($.PRE_TEST, foo, bar);
 			expect(passed.args).to.eql([foo, bar]);
 		});
+		it('should pass first parameter to thenables', function(done) {
+			instance
+				.pre('test')
+				.then(function(p) {
+					expect(p).to.eql([foo, bar]);
+					done();
+				});
+			instance.callHook($.PRE_TEST, [foo, bar]);
+		});
 		it('should pass `parameters[]` to middleware', function() {
 			instance.callHook($.PRE_TEST, [foo, bar]);
-			expect(passed.args).to.eql([foo, bar]);
+			expect(passed.args).to.eql([[foo, bar]]);
 		});
 		it('should pass functions as parameters to middleware', function() {
 			var f = function funcParam() {
 			};
 			instance.callHook($.PRE_TEST, [foo, f], NOOP);
-			expect(passed.args).to.eql([foo, f]);
+			expect(passed.args).to.eql([[foo, f]]);
 		});
 		it('should execute middleware in scope `context`', function() {
 			var context = {};
