@@ -408,7 +408,7 @@ var methods = {
 		var output;
 		qualifyHook(parseHook(hook));
 		if(fns.length){
-			output=this;
+			output = this;
 		}else{
 			output = this.__grappling.opts.createThenable(function(resolve){
 				fns = [resolve];
