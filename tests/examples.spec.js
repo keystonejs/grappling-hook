@@ -63,8 +63,8 @@ describe('examples', function() {
 					//thenable
 					console.log('thenable: setup');
 					var done;
-					var promise = new P(function(resolve, fail){
-						done=resolve;
+					var promise = new P(function(resolve){
+						done = resolve;
 					});
 					setTimeout(function() {
 						console.log('thenable: done');
