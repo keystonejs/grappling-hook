@@ -112,7 +112,8 @@ function attachQualifier(instance, qualifier) {
 	 * @instance
 	 * @memberof GrapplingHook
 	 * @param {string} hook - hook name, e.g. `'save'`
-	 * @param {...middleware|middleware[]} middleware - middleware to register
+	 * @param {(...middleware|middleware[])} [middleware] - middleware to register
+	 * @returns {GrapplingHook|thenable} the {@link GrapplingHook} instance itself, or a {@link thenable} if no middleware was provided.
 	 * @example
 	 * instance.pre('save', function(){
 	 *   console.log('before saving');
@@ -126,8 +127,8 @@ function attachQualifier(instance, qualifier) {
 	 * @instance
 	 * @memberof GrapplingHook
 	 * @param {string} hook - hook name, e.g. `'save'`
-	 * @param {...middleware|middleware[]} middleware - middleware to register
-	 * @returns {GrapplingHook|thenable}
+	 * @param {(...middleware|middleware[])} [middleware] - middleware to register
+	 * @returns {GrapplingHook|thenable} the {@link GrapplingHook} instance itself, or a {@link thenable} if no middleware was provided.
 	 * @example
 	 * instance.post('save', function(){
 	 *   console.log('after saving');
@@ -387,7 +388,8 @@ function parseCallHookParams(instance, args) {
 var methods = {
 
 	/**
-	 * Adds middleware to a hook
+	 * Adds middleware to a qualified hook.
+	 * Convenience method which allows you to add middleware dynamically more easily.
 	 *
 	 * @param {String} qualifiedHook - qualified hook e.g. `pre:save`
 	 * @param {(...middleware|middleware[])} middleware - middleware to call
