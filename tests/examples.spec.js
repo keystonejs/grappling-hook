@@ -2,6 +2,8 @@
 /* eslint-env node, mocha */
 
 var expect = require('must');
+var P = require('bluebird');
+
 var subject = require('../index');
 var $ = require('./fixtures');
 var console;
@@ -16,6 +18,66 @@ describe('examples', function() {
 		console = $.console();
 		Date = $.date(0); //eslint-disable-line no-native-reassign
 	});
+	
+	describe('https://github.com/keystonejs/grappling-hook#mix-middleware-types', function() {
+		var grappling = subject;
+		it('should function correctly', function(done) {
+			var instance = grappling.mixin({
+				save: function save(callback) {
+					callback();
+				}
+			});
+			instance.addHooks('pre:save');
+			var expectations = function expectations() {
+				expect(console.logs).to.eql([
+					'async serial: setup', 
+					'async serial: done', 
+					'sync: done', 
+					'async parallel: setup', 
+					'thenable: setup', 
+					'thenable: done', 
+					'async parallel: done'
+				]);
+				done();
+			};
+			(function() {
+				instance.pre('save', function(next) {
+					//async serial
+					console.log('async serial: setup');
+					setTimeout(function() {
+						console.log('async serial: done');
+						next();
+					}, 100);
+				}, function() {
+					//sync
+					console.log('sync: done');
+				}, function(next, done) {
+					//async parallel
+					console.log('async parallel: setup');
+					setTimeout(function() {
+						console.log('async parallel: done');
+						done();
+					}, 200);
+					next();
+				}, function() {
+					//thenable
+					console.log('thenable: setup');
+					var done;
+					var promise = new P(function(resolve, fail){
+						done=resolve;
+					});
+					setTimeout(function() {
+						console.log('thenable: done');
+						done();
+					}, 30);
+					return promise;
+				});
+			})();
+
+			instance.save(expectations);
+		});
+	});	
+	
 	describe('https://github.com/keystonejs/grappling-hook#creating-a-grappling-hook-object', function() {
 		var grappling = subject;
 		it('should function correctly', function(done) {
@@ -143,98 +205,6 @@ describe('examples', function() {
 			})();
 		});
 	});
-	describe('https://github.com/keystonejs/grappling-hook#middleware-types', function() {
-		var grappling = subject;
-		it('should function correctly', function(done) {
-			var instance = grappling.mixin({
-				save: function save(callback) {
-					callback();
-				}
-			});
-			instance.addHooks('pre:save');
-			var expectations = function expectations() {
-				expect(console.logs).to.eql(['A setup', 'A done', 'B done', 'C setup', 'D setup', 'D done', 'C done']);
-				done();
-			};
-			(function() {
-				instance.pre('save', function(next) {
-					//async serial
-					console.log('A setup');
-					setTimeout(function() {
-						console.log('A done');
-						next();
-					}, 100);
-				}, function() {
-					//sync
-					console.log('B done');
-				}, function(next, done) {
-					//async parallel
-					console.log('C setup');
-					setTimeout(function() {
-						console.log('C done');
-						done();
-					}, 200);
-					next();
-				}, function(next, done) {
-					//async parallel
-					console.log('D setup');
-					setTimeout(function() {
-						console.log('D done');
-						done();
-					}, 30);
-					next();
-				});
-			})();
-
-			instance.save(expectations);
-		});
-	});
-	describe('https://github.com/keystonejs/grappling-hook#qualified-hooks', function() {
-		var grappling = subject;
-		it('should function correctly', function(done) {
-			var instance = grappling.mixin({
-				save: function save(callback) {
-					callback();
-				}
-			});
-			instance.addHooks('pre:save');
-			var expectations = function expectations() {
-				expect(console.logs).to.eql(['pre', 'All done!!']);
-				done();
-			};
-			(function() {
-				instance.hook('pre:save', function() {
-					console.log('pre');
-				});
-				instance.save(function() {
-					console.log('All done!!');
-					expectations();
-				});
-			})();
-		});
-	});
-	describe('https://github.com/keystonejs/grappling-hook#manual-calling-of-hooks', function() {
-		var grappling = subject;
-		it('should function correctly', function(done) {
-			var expectations = function expectations() {
-				expect(console.logs).to.eql(['saving!']);
-				done();
-			};
-			(function() {
-				var instance = grappling.create(); // create an instance
-
-				instance.allowHooks('save'); // since we won't be wrapping a function with a hooking, we need to explicitly tell which hook will be available for middleware
-
-				instance.pre('save', function() {
-					console.log('saving!');
-				});
-
-				instance.callHook('pre:save', function() {
-					expectations();
-				}); // <--- let's run our middleware
-			})();
-		});
-	});
 	describe('https://github.com/keystonejs/grappling-hook#parameters', function() {
 		var grappling = subject;
 		it('should function correctly', function(done) {
@@ -259,7 +229,8 @@ describe('examples', function() {
 			})();
 		});
 	});
-	describe('https://github.com/keystonejs/grappling-hook#context', function() {
+
+	describe('https://github.com/keystonejs/grappling-hook#contexts', function() {
 		var grappling = subject;
 		it('should function correctly', function(done) {
 			var instance = grappling.create();
@@ -282,7 +253,7 @@ describe('examples', function() {
 			})();
 		});
 	});
-	describe('https://github.com/keystonejs/grappling-hook#context 2', function() {
+	describe('https://github.com/keystonejs/grappling-hook#contexts 2', function() {
 		var grappling = subject;
 		it('should function correctly', function(done) {
 			var instance = grappling.create();
@@ -311,52 +282,32 @@ describe('examples', function() {
 			})();
 		});
 	});
-	describe('https://github.com/keystonejs/grappling-hook#callback', function() {
+	
+	describe('https://github.com/keystonejs/grappling-hook#qualified-hooks', function() {
 		var grappling = subject;
 		it('should function correctly', function(done) {
-			var instance = grappling.create();
-			instance.allowHooks('pre:save');
+			var instance = grappling.mixin({
+				save: function save(callback) {
+					callback();
+				}
+			});
+			instance.addHooks('pre:save');
 			var expectations = function expectations() {
-				expect(console.logs).to.eql(['middleware', "We're finished!"]);
+				expect(console.logs).to.eql(['pre', 'All done!!']);
 				done();
 			};
 			(function() {
-				instance.pre('save', function asyncMiddleware(next) {
-					setTimeout(function() {
-						console.log('middleware');
-						next();
-					}, 100);
+				instance.hook('pre:save', function() {
+					console.log('pre');
 				});
-
-				instance.callHook('pre:save', function() {
-					console.log("We're finished!");
+				instance.save(function() {
+					console.log('All done!!');
 					expectations();
 				});
 			})();
 		});
 	});
-	describe('https://github.com/keystonejs/grappling-hook#synchronized-hooks', function() {
-		var grappling = subject;
-		it('should function correctly', function(done) {
-			var instance = grappling.create();
-			instance.allowHooks('pre:saveSync');
-			var expectations = function expectations() {
-				expect(console.logs).to.eql(['before callSyncHook', 'middleware foo bar', 'after callSyncHook']);
-				done();
-			};
-			(function() {
-				instance.pre('saveSync', function syncMiddleware(foo, bar) {
-					console.log('middleware', foo, bar);
-				});
 
-				console.log('before callSyncHook');
-				instance.callSyncHook('pre:saveSync', 'foo', 'bar');
-				console.log('after callSyncHook');
-
-				expectations();
-			})();
-		});
-	});
 	describe('https://github.com/keystonejs/grappling-hook#error-handling', function() {
 		var grappling = subject;
 		it('should function correctly', function() {
