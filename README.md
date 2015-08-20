@@ -749,3 +749,16 @@ console.log(grappling.get('grappling-hook:examples.presets'));
 [setup-thenables]: #setting-up-thenable-hooks
 [thenable-middleware]: #thenable-middleware-promises
 [thenable-hooks]: #thenable-hooks
+
+## Changelog
+
+See [History.md](https://github.com/keystonejs/grappling-hook/blob/master/History.md)
+
+## Contributing
+
+Pull requests welcome. Make sure you use the .editorconfig in your IDE of choice and please adhere to the coding style as defined in .eslintrc.
+
+* `npm test` for running the tests
+* `npm run lint` for running eslint
+* `npm run test-cov` for churning out test coverage. (We go for 100% here!)
+* `npm run docs` for generating the API docs
