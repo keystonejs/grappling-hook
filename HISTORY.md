@@ -1,6 +1,6 @@
 # GrapplingHook Changelog
 
-## v3.0.0
+## v3.0.0 / 2015-08-20
 
 * changed; BREAKING - remove parameter flattening from `callHook`, `callSyncHook` and `callThenableHook`
 * changed; when no callback is provided to `pre/post/hook` return a thenable
