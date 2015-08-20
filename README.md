@@ -3,7 +3,7 @@
 [![npm version](https://badge.fury.io/js/grappling-hook.svg)](http://npmjs.org/packages/grappling-hook)
 [![Coverage Status](https://coveralls.io/repos/keystonejs/grappling-hook/badge.svg?branch=master)](https://coveralls.io/r/keystonejs/grappling-hook?branch=master)
 
->pre/post hooking enabler 
+>pre/post hooking enabler
 
 `grappling-hook` allows you to add pre/post hooks to objects and prototypes.
 A number of modules already exist that allow you to do just the same, but the most popular one ([hooks](https://www.npmjs.com/package/hooks)) is no longer maintained.
@@ -28,7 +28,7 @@ From here on `grappling-hook` refers to the module itself (i.e. what you get whe
 `grappling-hook` and `GrapplingHook` expose two different API's:
 
 1. a consumer-facing API, i.e. it allows you to add middleware functions to pre/post hooks.
-1. a producer-facing API, i.e. it allows you to create hooks, wrap methods with hooks, et cetera. 
+1. a producer-facing API, i.e. it allows you to create hooks, wrap methods with hooks, et cetera.
 
 ### Consumer-facing API
 
@@ -39,7 +39,7 @@ Allows you to add/remove [middleware][middleware] functions to hooks. There's 4 
 i.e. the function is executed and the next middleware function in queue will be called immediately.
 
 ```js
-function(){ //no callbacks
+function () { //no callbacks
 	//synchronous execution
 }
 ```
@@ -49,7 +49,7 @@ function(){ //no callbacks
 i.e. the next middleware function in queue will be called once the current middleware function finishes its (asynchronous) execution.
 
 ```js
-function(next){ //a single callback
+function (next) { //a single callback
 	//asynchronous execution, i.e. further execution is halted until `next` is called.
 	setTimeout(next, 1000);
 }
@@ -60,7 +60,7 @@ function(next){ //a single callback
 i.e. the next middleware function in queue will be called once the current middleware function signals it, however the whole queue will only be finished once the current middleware function has completed its (a)synchronous execution.
 
 ```js
-function(next, done){ //two callbacks
+function (next, done) { //two callbacks
 	//asynchronous execution, i.e. further execution is halted until `next` is called.
 	setTimeout(next, 500);
 	//full middleware queue handling is halted until `done` is called.
@@ -73,7 +73,7 @@ function(next, done){ //two callbacks
 i.e. the next middleware function in queue will be called once the [thenable][thenable] middleware function has resolved its promise.
 
 ```js
-function(){ //no callbacks
+function () { //no callbacks
 	//create promise, i.e. further execution is halted until the promise is resolved.
 	return promise
 }
@@ -177,32 +177,32 @@ You can check if a hook has middleware registered with [GrapplingHook#hasMiddlew
 You can **mix sync/async serial/parallel and thenable middleware** any way you choose (for aynchronous and thenable hooks):
 
 ```js
-instance.pre('save', function(next) {
+instance.pre('save', function (next) {
 	//async serial
 	console.log('async serial: setup');
-	setTimeout(function() {
+	setTimeout(function () {
 		console.log('async serial: done');
 		next();
 	}, 100);
-}, function() {
+}, function () {
 	//sync
 	console.log('sync: done');
-}, function(next, done) {
+}, function (next, done) {
 	//async parallel
 	console.log('async parallel: setup');
-	setTimeout(function() {
+	setTimeout(function () {
 		console.log('async parallel: done');
 		done();
 	}, 200);
 	next();
-}, function() {
+}, function () {
 	//thenable
 	console.log('thenable: setup');
 	var done;
-	var promise = new P(function(resolve, fail){
-		done=resolve;
+	var promise = new P(function (resolve, fail) {
+		done = resolve;
 	});
-	setTimeout(function() {
+	setTimeout(function () {
 		console.log('thenable: done');
 		done();
 	}, 30);
@@ -227,22 +227,25 @@ You can easily add methods to a new `grappling-hook` instance which are automati
 ```js
 var grappling = require('grappling-hook');
 
-var instance = grappling.create(); // create an instance
+// create an instance
+var instance = grappling.create();
 
-instance.addHooks({ // declare the hookable methods
-	save: function(done) {
+// declare the hookable methods
+instance.addHooks({
+	save: function (done) {
 		console.log('save!');
 		done();
 	}
 });
 
-instance.pre('save', function() { //allow middleware to be registered for a hook
+//allow middleware to be registered for a hook
+instance.pre('save', function () {
 	console.log('saving!');
-}).post('save', function() {
+}).post('save', function () {
 	console.log('saved!');
 });
 
-instance.save(function(err) {
+instance.save(function (err) {
 	console.log('All done!!');
 });
 ```
@@ -262,7 +265,7 @@ You can choose to enable hooking for an already existing object with methods:
 var grappling = require('grappling-hook');
 
 var instance = {
-	save: function(done) {
+	save: function (done) {
 		console.log('save!');
 		done();
 	}
@@ -272,13 +275,13 @@ grappling.mixin(instance); // add grappling-hook functionality to an existing ob
 
 instance.addHooks('save'); // setup hooking for an existing method
 
-instance.pre('save', function() {
+instance.pre('save', function () {
 	console.log('saving!');
-}).post('save', function() {
+}).post('save', function () {
 	console.log('saved!');
 });
 
-instance.save(function(err) {
+instance.save(function (err) {
 	console.log('All done!!');
 });
 
@@ -298,9 +301,9 @@ You can patch a `prototype` with `grappling-hook` methods:
 ```js
 var grappling = require('grappling-hook');
 
-var Clazz = function() {
-};
-Clazz.prototype.save = function(done) {
+var Clazz = function () {};
+
+Clazz.prototype.save = function (done) {
 	console.log('save!');
 	done();
 };
@@ -310,13 +313,13 @@ grappling.attach(Clazz); // attach grappling-hook functionality to a 'class'
 var instance = new Clazz();
 instance.addHooks('save'); // setup hooking for an existing method
 
-instance.pre('save', function() {
+instance.pre('save', function () {
 	console.log('saving!');
-}).post('save', function() {
+}).post('save', function () {
 	console.log('saved!');
 });
 
-instance.save(function(err) {
+instance.save(function (err) {
 	console.log('All done!!');
 });
 ```
@@ -336,7 +339,7 @@ All done!!
 var grappling = require('grappling-hook');
 
 var instance = {
-	saveSync: function(filename) {
+	saveSync: function (filename) {
 		filename = Date.now() + '-' + filename;
 		console.log('save', filename);
 		return filename;
@@ -347,9 +350,9 @@ grappling.mixin(instance); // add grappling-hook functionality to an existing ob
 
 instance.addSyncHooks('saveSync'); // setup hooking for an existing (sync) method
 
-instance.pre('saveSync', function() {
+instance.pre('saveSync', function () {
 	console.log('saving!');
-}).post('saveSync', function() {
+}).post('saveSync', function () {
 	console.log('saved!');
 });
 
@@ -369,11 +372,11 @@ new name: 1431264587725-example.txt
 You can pass any number of parameters to your middleware:
 
 ```js
-instance.pre('save', function(foo, bar){
+instance.pre('save', function (foo, bar) {
 	console.log('saving!', foo, bar);
 });
 
-instance.callHook('pre:save', 'foo', { bar: 'bar'}, function(){
+instance.callHook('pre:save', 'foo', { bar: 'bar'}, function () {
 	console.log('done!');
 });
 ```
@@ -384,12 +387,12 @@ done!
 ```
 
 ```js
-instance.save = function(filename, dir, done){
-	//do your magic
+instance.save = function (filename, dir, done) {
+	// do your magic
 	done();
 }
 
-instance.pre('save', function(filename, dir){
+instance.pre('save', function (filename, dir) {
 	console.log('saving!', filename, dir);
 });
 
@@ -405,11 +408,11 @@ saving! README.md docs
 By default all middleware is called with the `GrapplingHook` instance as an execution context, e.g.:
 
 ```js
-instance.pre('save', function(){
+instance.pre('save', function () {
 	console.log(this);
 });
 
-instance.toString = function(){
+instance.toString = function () {
 	return "That's me!!";
 };
 instance.callSyncHook('pre:save');
@@ -422,16 +425,16 @@ That's me!!
 However, `callHook`, `callSyncHook` and `callThenableHook` accept a `context` parameter to change the scope:
 
 ```js
-instance.pre('save', function() {
+instance.pre('save', function () {
 	console.log(this);
 });
 
-instance.toString = function() {
+instance.toString = function () {
 	return "That's me!!";
 };
 
 var context = {
-	toString: function() {
+	toString: function () {
 		return 'Different context!';
 	}
 };
@@ -460,16 +463,16 @@ By default `grappling-hook` registers `pre` and `post` methods, but you can conf
 ```js
 var instance = grappling.create({
 	qualifiers: {
-		pre: "before",
-		post: "after"
+		pre: 'before',
+		post: 'after'
 	}
 });
 
 //now use `before` and `after` instead of `pre` and `post`:
 
-instance.addHooks("save");
-instance.before("save", fn);
-instance.after("save", fn);
+instance.addHooks('save');
+instance.before('save', fn);
+instance.after('save', fn);
 instance.save();
 ```
 
@@ -485,31 +488,31 @@ Just to be clear: you do NOT need to provide a thenable factory function in orde
 var P = require('bluebird');
 
 var instance = grappling.create({
-	createThenable: function(fn){
+	createThenable: function (fn) {
 		return new P(fn);
 	}
 })
 
 instance.addThenableHooks({
-	save: function(filename){
-		var p = new P(function(resolve, reject){
-			//add code for saving
+	save: function (filename) {
+		var p = new P(function (resolve, reject) {
+			// add code for saving
 		});
 		return p;
 	}
 });
 
-instance.save('examples.txt').then(function(){
+instance.save('examples.txt').then(function () {
 	console.log('Finished!');
 });
 ```
 
 ### Error handling
 
-- Errors thrown in middleware registered to synchronized hooks will bubble through 
+- Errors thrown in middleware registered to synchronized hooks will bubble through
 
 	```js
-	instance.pre('save', function(){
+	instance.pre('save', function () {
 		throw new Error('Oh noes!');
 	});
 	instance.callSyncHook('pre:save');
@@ -518,15 +521,15 @@ instance.save('examples.txt').then(function(){
 	# output:
 	Error: Oh noes!
 	```
-	
-- Errors thrown in middleware registered to asynchronous hooks are available as the `err` object in the `callback`. 
+
+- Errors thrown in middleware registered to asynchronous hooks are available as the `err` object in the `callback`.
 
 	```js
-	instance.pre('save', function(){
+	instance.pre('save', function () {
 		throw new Error('Oh noes!');
 	});
-	instance.callHook('pre:save', function(err){
-		console.log( "Error occurred:", err);
+	instance.callHook('pre:save', function (err) {
+		console.log('Error occurred:', err);
 	});
 	```
 	```sh
@@ -534,14 +537,14 @@ instance.save('examples.txt').then(function(){
 	Error occurred: Error: Oh noes!
 	```
 
-- Errors thrown in middleware registered to thenable hooks trigger the promise's rejectedHandler. 
+- Errors thrown in middleware registered to thenable hooks trigger the promise's rejectedHandler.
 
 	```js
-	instance.pre('save', function(){
+	instance.pre('save', function () {
 		throw new Error('Oh noes!');
 	});
-	instance.callThenableHook('pre:save').then(null, function(err){
-		console.log( "Error occurred:", err);
+	instance.callThenableHook('pre:save').then(null, function (err) {
+		console.log('Error occurred:', err);
 	});
 	```
 	```sh
@@ -553,20 +556,20 @@ instance.save('examples.txt').then(function(){
 
 	```js
 	//async serial
-	instance.pre('save', function(next){
-		next(new Error("Oh noes!"));
+	instance.pre('save', function (next) {
+		next(new Error('Oh noes!'));
 	});
-	```	
+	```
 	```js
 	//async parallel
-	instance.pre('save', function(next, done){
+	instance.pre('save', function (next, done) {
 		next();
-		done(new Error("Oh noes!"));
+		done(new Error('Oh noes!'));
 	});
-	```	
+	```
 	```js
-	instance.callHook('pre:save', function(err){
-		if(err){
+	instance.callHook('pre:save', function (err) {
+		if (err) {
 			console.log('An error occurred:', err);
 		}
 	});
@@ -579,20 +582,20 @@ instance.save('examples.txt').then(function(){
 
 	```js
 	//async serial
-	instance.pre('save', function(next){
-		next(new Error("Oh noes!"));
+	instance.pre('save', function (next) {
+		next(new Error('Oh noes!'));
 	});
-	```	
+	```
 	```js
 	//async parallel
-	instance.pre('save', function(next, done){
+	instance.pre('save', function (next, done) {
 		next();
-		done(new Error("Oh noes!"));
+		done(new Error('Oh noes!'));
 	});
-	```	
+	```
 	```js
-	instance.callThenableHook('pre:save').then(null, function(err){
-		if(err){
+	instance.callThenableHook('pre:save').then(null, function (err) {
+		if (err) {
 			console.log('An error occurred:', err);
 		}
 	});
@@ -605,20 +608,20 @@ instance.save('examples.txt').then(function(){
 - Thenable middleware can reject their promises, which will be passed as the `err` object parameter for asynchronous hooks:
 
 	```js
-	instance.pre('save', function(next){
-		var p = new Promise(function(succeed, fail){
+	instance.pre('save', function (next) {
+		var p = new Promise(function (succeed, fail) {
 			fail('Oh noes!');
 		});
 		return p;
 	});
 	```
 	```js
-	instance.callHook('pre:save', function(err){
-		if(err){
+	instance.callHook('pre:save', function (err) {
+		if (err) {
 			console.log('An error occurred:', err);
 		}
 	});
-	```	
+	```
 	```sh
 	# output:
 	An error occurred: Oh noes!
@@ -626,16 +629,16 @@ instance.save('examples.txt').then(function(){
 - Thenable middleware can reject their promises, which will trigger the rejectedHandler of thenable hooks:
 
 	```js
-	instance.pre('save', function(next){
-		var p = new Promise(function(succeed, fail){
+	instance.pre('save', function (next) {
+		var p = new Promise(function (succeed, fail) {
 			fail('Oh noes!');
 		});
 		return p;
 	});
-	```	
+	```
 	```js
-	instance.callThenableHook('pre:save').then(null, function(err){
-		if(err){
+	instance.callThenableHook('pre:save').then(null, function (err) {
+		if (err) {
 			console.log('An error occurred:', err);
 		}
 	});
@@ -651,9 +654,9 @@ You can [set][grappling-hook.set] and use preset configurations, in order to reu
 
 ```js
 var presets = {
-	strict: false, 
+	strict: false,
 	qualifiers: {
-		pre: 'before', 
+		pre: 'before',
 		post: 'after'
 	}
 };
@@ -664,14 +667,14 @@ grappling.set('grappling-hook:examples.presets', presets);
 var instance = grappling.create('grappling-hook:examples.presets');
 
 instance.addSyncHooks({
-	save: function(){
+	save: function () {
 		console.log('Saving!');
 	}
 });
 
-instance.before('save', function(){
+instance.before('save', function () {
 	console.log('Before save!');
-}).after('save', function(){
+}).after('save', function () {
 	console.log('After save!');
 }).save();
 ```
