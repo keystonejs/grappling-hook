@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>grappling-hook</h1><p><a href="https://travis-ci.org/keystonejs/grappling-hook"><img src="https://travis-ci.org/keystonejs/grappling-hook.svg" alt="Build Status"></a>
+<a href="http://npmjs.org/packages/grappling-hook"><img src="https://badge.fury.io/js/grappling-hook.svg" alt="npm version"></a>
+<a href="https://coveralls.io/r/keystonejs/grappling-hook?branch=master"><img src="https://coveralls.io/repos/keystonejs/grappling-hook/badge.svg?branch=master" alt="Coverage Status"></a></p>
+<blockquote>
+<p>pre/post hooking enabler</p>
+</blockquote>
+<p><code>grappling-hook</code> allows you to add pre/post hooks to objects and prototypes.
+A number of modules already exist that allow you to do just the same, but the most popular one (<a href="https://www.npmjs.com/package/hooks">hooks</a>) is no longer maintained.
+Also, we wanted a more granular control of the hooking process and the way middleware is called.</p>
+<p><strong>NEW:</strong></p>
+<ul>
+<li>since v3.0 you can <a href="#thenable-middleware-promises">use promises as middleware</a> and have <a href="#thenable-hooks">thenable hooks</a> (i.e. promise returning hooks).</li>
+<li>since v2.4 you can <a href="#synchronous-hooks">wrap sync methods and call sync hooks</a>.</li>
+<li>since v2.3 you can <a href="#other-qualifiers">configure <code>grappling-hook</code> to use other method names</a> than <code>pre</code> or <code>post</code>, e.g. <code>before</code> and <code>after</code>.</li>
+</ul>
+<h2>Installation</h2><pre class="prettyprint source lang-sh"><code>$ npm install grappling-hook</code></pre><h2>Usage</h2><p>From here on <code>grappling-hook</code> refers to the module itself (i.e. what you get when you <code>require('grappling-hook')</code>) and <code>GrapplingHook</code> refers to any GrapplingHook object (i.e. an object which allows you to register <code>pre</code> and <code>post</code> middleware, et cetera)</p>
+<p><code>grappling-hook</code> and <code>GrapplingHook</code> expose two different API's:</p>
+<ol>
+<li>a consumer-facing API, i.e. it allows you to add middleware functions to pre/post hooks.</li>
+<li>a producer-facing API, i.e. it allows you to create hooks, wrap methods with hooks, et cetera.</li>
+</ol>
+<h3>Consumer-facing API</h3><p>Allows you to add/remove <a href="https://keystonejs.github.io/grappling-hook/global.html#middleware">middleware</a> functions to hooks. There's 4 types of middleware possible:</p>
+<h4>synchronous middleware</h4><p>i.e. the function is executed and the next middleware function in queue will be called immediately.</p>
+<pre class="prettyprint source lang-js"><code>function () { //no callbacks
+    //synchronous execution
+}</code></pre><h4>serially (a)synchronous middleware</h4><p>i.e. the next middleware function in queue will be called once the current middleware function finishes its (asynchronous) execution.</p>
+<pre class="prettyprint source lang-js"><code>function (next) { //a single callback
+    //asynchronous execution, i.e. further execution is halted until `next` is called.
+    setTimeout(next, 1000);
+}</code></pre><h4>parallel (a)synchronous middleware</h4><p>i.e. the next middleware function in queue will be called once the current middleware function signals it, however the whole queue will only be finished once the current middleware function has completed its (a)synchronous execution.</p>
+<pre class="prettyprint source lang-js"><code>function (next, done) { //two callbacks
+    //asynchronous execution, i.e. further execution is halted until `next` is called.
+    setTimeout(next, 500);
+    //full middleware queue handling is halted until `done` is called.
+    setTimeout(done, 1000);
+}</code></pre><h4>thenable middleware (promises)</h4><p>i.e. the next middleware function in queue will be called once the <a href="https://keystonejs.github.io/grappling-hook/global.html#thenable">thenable</a> middleware function has resolved its promise.</p>
+<pre class="prettyprint source lang-js"><code>function () { //no callbacks
+    //create promise, i.e. further execution is halted until the promise is resolved.
+    return promise
+}</code></pre><p>(Sidenote: all consumer-facing methods exist out of a single word)</p>
+<p>See:</p>
+<ul>
+<li><a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#pre">GrapplingHook#pre</a> on how to register <a href="https://keystonejs.github.io/grappling-hook/global.html#middleware">middleware</a> functions to <code>pre</code> hooks.</li>
+<li><a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#post">GrapplingHook#post</a> on how to register <a href="https://keystonejs.github.io/grappling-hook/global.html#middleware">middleware</a> functions to <code>post</code> hooks.</li>
+<li><a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#hook">GrapplingHook#hook</a> on how to register <a href="https://keystonejs.github.io/grappling-hook/global.html#middleware">middleware</a> functions to <code>pre</code> or <code>post</code> hooks.</li>
+</ul>
+<p>All three allow you to register middleware functions by either passing them as parameters to the method:</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save', notifyUser, checkPermissions, doSomethingElseVeryImportant);</code></pre><p>Or (if the grappling-hook instances are <a href="#setting-up-thenable-hooks">setup for thenables</a>) by chaining them with <code>then</code>:</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save')
+    .then(notifyUser)
+    .then(checkPermissions)
+    .then(doSomethingElseVeryImportant)</code></pre><p>Additionally see:</p>
+<ul>
+<li><a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#unhook">GrapplingHook#unhook</a> on how to deregister <a href="https://keystonejs.github.io/grappling-hook/global.html#middleware">middleware</a> functions from hooks.</li>
+<li><a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#hookable">GrapplingHook#hookable</a> on how to check whether a hook is available.</li>
+</ul>
+<h3>Producer-facing API</h3><p><code>grappling-hook</code> provides you with methods to store, retrieve and reuse presets.</p>
+<ul>
+<li><a href="https://keystonejs.github.io/grappling-hook/module-grappling-hook.html#.set">grappling-hook.set</a> on how to store presets.</li>
+<li><a href="https://keystonejs.github.io/grappling-hook/module-grappling-hook.html#.get">grappling-hook.get</a> on how to view presets.</li>
+</ul>
+<p>All <code>grappling-hook</code> factory functions allow you to reuse presets, see <a href="#presets">presets example</a>.</p>
+<p>See:</p>
+<ul>
+<li><a href="https://keystonejs.github.io/grappling-hook/module-grappling-hook.html#.create">grappling-hook.create</a> on how to create vanilla <code>GrapplingHook</code> objects.</li>
+<li><a href="https://keystonejs.github.io/grappling-hook/module-grappling-hook.html#.mixin">grappling-hook.mixin</a> on how to add <code>GrapplingHook</code> functionality to existing objects.</li>
+<li><a href="https://keystonejs.github.io/grappling-hook/module-grappling-hook.html#.attach">grappling-hook.attach</a> on how to add <code>GrapplingHook</code> functionality to constructors.</li>
+</ul>
+<p>By default <code>GrapplingHook</code> hooks need to be either explicitly declared with <a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#allowHooks">GrapplingHook#allowHooks</a> if you want to call your hooks directly or by wrapping existing methods.</p>
+<p><code>GrapplingHook</code> objects can have 3 kinds of hooks:</p>
+<h4>Asynchronous hooks</h4><p>Asynchronous hooks <strong>require</strong> a callback as the final parameter. It will be called once all pre <em>and</em> post middleware has finished. When using a wrapped method, the original (unwrapped) method will be called in between the pre and post middleware.</p>
+<p>Asynchronous hooks <em>always</em> finish asynchronously, i.e. even if only synchronous middleware has been registered to a hook <code>callback</code> will always be called asynchronously (next tick at the earliest).</p>
+<p>Middleware added to asynchronous hooks can be synchronous, serially asynchronous, parallel asynchronous or thenable. See <a href="https://keystonejs.github.io/grappling-hook/global.html#middleware">middleware</a> for more information.</p>
+<p>See:</p>
+<ul>
+<li><a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#addHooks">GrapplingHook#addHooks</a> or its alias <a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#addAsyncHooks">GrapplingHook#addAsyncHooks</a> on how to wrap asynchronous methods with pre/post hooks.</li>
+<li><a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#callHook">GrapplingHook#callHook</a> or its alias <a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#callAsyncHook">GrapplingHook#callAsyncHook</a> on how to call an asynchronous pre or post hook directly.</li>
+</ul>
+<h4>Synchronous hooks</h4><p>Synchronous hooks do not require a callback and allow the possibility to return values from wrapped methods.</p>
+<p>They <em>always</em> finish synchronously, which means consumers are not allowed to register any asynchronous middleware (including thenables) to synchronous hooks.</p>
+<p>See:</p>
+<ul>
+<li><a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#addSyncHooks">GrapplingHook#addSyncHooks</a> on how to wrap synchronous methods with pre/post hooks.</li>
+<li><a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#callSyncHook">GrapplingHook#callSyncHook</a> on how to call a synchronous pre or post hook directly.</li>
+</ul>
+<h4>Thenable hooks</h4><p>Thenable hooks <strong>must</strong> return a promise.</p>
+<p>They <em>always</em> finish asynchronously, i.e. even if only synchronous middleware has been registered to a thenable hook the promise will be resolved asynchronously.</p>
+<p>Middleware added to thenable hooks can be synchronous, serially asynchronous, parallel asynchronous or thenable. See <a href="https://keystonejs.github.io/grappling-hook/global.html#middleware">middleware</a> for more information.</p>
+<p>See:</p>
+<ul>
+<li><a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#addThenableHooks">GrapplingHook#addThenableHooks</a> on how to wrap thenable methods with pre/post hooks.</li>
+<li><a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#callThenableHook">GrapplingHook#callThenableHook</a> on how to call a thenable pre or post hook directly.</li>
+</ul>
+<p>In order to create thenable hooks <code>grappling-hook</code> must be properly <a href="#setting-up-thenable-hooks">setup for creating thenables</a>.</p>
+<h3>Introspection</h3><p>You can check if a hook has middleware registered with <a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#hasMiddleware">GrapplingHook#hasMiddleware</a> or you can even access the raw middleware functions through <a href="https://keystonejs.github.io/grappling-hook/GrapplingHook.html#getMiddleware">GrapplingHook#getMiddleware</a>.</p>
+<h2>Examples</h2><h3>mix middleware types</h3><p>You can <strong>mix sync/async serial/parallel and thenable middleware</strong> any way you choose (for aynchronous and thenable hooks):</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save', function (next) {
+    //async serial
+    console.log('async serial: setup');
+    setTimeout(function () {
+        console.log('async serial: done');
+        next();
+    }, 100);
+}, function () {
+    //sync
+    console.log('sync: done');
+}, function (next, done) {
+    //async parallel
+    console.log('async parallel: setup');
+    setTimeout(function () {
+        console.log('async parallel: done');
+        done();
+    }, 200);
+    next();
+}, function () {
+    //thenable
+    console.log('thenable: setup');
+    var done;
+    var promise = new P(function (resolve, fail) {
+        done = resolve;
+    });
+    setTimeout(function () {
+        console.log('thenable: done');
+        done();
+    }, 30);
+    return promise;
+});</code></pre><pre class="prettyprint source lang-sh"><code># output
+async serial: setup
+async serial: done
+sync: done
+async parallel: setup
+thenable: setup
+thenable: done
+async parallel: done</code></pre><h3>Creating a <code>GrapplingHook</code> object</h3><p>You can easily add methods to a new <code>grappling-hook</code> instance which are automatically ready for hooking up middleware:</p>
+<pre class="prettyprint source lang-js"><code>var grappling = require('grappling-hook');
+
+// create an instance
+var instance = grappling.create();
+
+// declare the hookable methods
+instance.addHooks({
+    save: function (done) {
+        console.log('save!');
+        done();
+    }
+});
+
+//allow middleware to be registered for a hook
+instance.pre('save', function () {
+    console.log('saving!');
+}).post('save', function () {
+    console.log('saved!');
+});
+
+instance.save(function (err) {
+    console.log('All done!!');
+});</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving!
+save!
+saved!
+All done!!</code></pre><h3>Using an existing object</h3><p>You can choose to enable hooking for an already existing object with methods:</p>
+<pre class="prettyprint source lang-js"><code>var grappling = require('grappling-hook');
+
+var instance = {
+    save: function (done) {
+        console.log('save!');
+        done();
+    }
+};
+
+grappling.mixin(instance); // add grappling-hook functionality to an existing object
+
+instance.addHooks('save'); // setup hooking for an existing method
+
+instance.pre('save', function () {
+    console.log('saving!');
+}).post('save', function () {
+    console.log('saved!');
+});
+
+instance.save(function (err) {
+    console.log('All done!!');
+});</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving!
+save!
+saved!
+All done!!</code></pre><h3>Using a 'class'</h3><p>You can patch a <code>prototype</code> with <code>grappling-hook</code> methods:</p>
+<pre class="prettyprint source lang-js"><code>var grappling = require('grappling-hook');
+
+var MyClass = function () {};
+
+MyClass.prototype.save = function (done) {
+    console.log('save!');
+    done();
+};
+
+grappling.attach(MyClass); // attach grappling-hook functionality to a 'class'
+
+var instance = new MyClass();
+instance.addHooks('save'); // setup hooking for an existing method
+
+instance.pre('save', function () {
+    console.log('saving!');
+}).post('save', function () {
+    console.log('saved!');
+});
+
+instance.save(function (err) {
+    console.log('All done!!');
+});</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving!
+save!
+saved!
+All done!!</code></pre><h3>Adding hooks to synchronous methods</h3><p><code>addSyncHooks</code> allows you to register methods for enforced synchronized middleware execution:</p>
+<pre class="prettyprint source lang-js"><code>var grappling = require('grappling-hook');
+
+var instance = {
+    saveSync: function (filename) {
+        filename = Date.now() + '-' + filename;
+        console.log('save', filename);
+        return filename;
+    }
+};
+
+grappling.mixin(instance); // add grappling-hook functionality to an existing object
+
+instance.addSyncHooks('saveSync'); // setup hooking for an existing (sync) method
+
+instance.pre('saveSync', function () {
+    console.log('saving!');
+}).post('saveSync', function () {
+    console.log('saved!');
+});
+
+var newName = instance.saveSync('example.txt');
+console.log('new name:', newName);</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving!
+save 1431264587725-example.txt
+saved!
+new name: 1431264587725-example.txt</code></pre><h3>Passing parameters</h3><p>You can pass any number of parameters to your middleware:</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save', function (foo, bar) {
+    console.log('saving!', foo, bar);
+});
+
+instance.callHook('pre:save', 'foo', { bar: 'bar'}, function () {
+    console.log('done!');
+});</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving! foo { bar: 'bar' }
+done!</code></pre><pre class="prettyprint source lang-js"><code>instance.save = function (filename, dir, done) {
+    // do your magic
+    done();
+}
+
+instance.pre('save', function (filename, dir) {
+    console.log('saving!', filename, dir);
+});
+
+instance.save('README.md', 'docs');</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving! README.md docs</code></pre><h3>Contexts</h3><p>By default all middleware is called with the <code>GrapplingHook</code> instance as an execution context, e.g.:</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save', function () {
+    console.log(this);
+});
+
+instance.toString = function () {
+    return &quot;That's me!!&quot;;
+};
+instance.callSyncHook('pre:save');</code></pre><pre class="prettyprint source lang-sh"><code># output:
+That's me!!</code></pre><p>However, <code>callHook</code>, <code>callSyncHook</code> and <code>callThenableHook</code> accept a <code>context</code> parameter to change the scope:</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save', function () {
+    console.log(this);
+});
+
+instance.toString = function () {
+    return &quot;That's me!!&quot;;
+};
+
+var context = {
+    toString: function () {
+        return 'Different context!';
+    }
+};
+instance.callSyncHook(context, 'pre:save'); // the `context` goes first</code></pre><pre class="prettyprint source lang-sh"><code># output:
+Different context!
+All done!!</code></pre><h3>Lenient mode</h3><p>By default <code>grappling-hook</code> throws errors if you try to add middleware to or call a non-existing hook. However if you want to allow more leeway (for instance for dynamic delegated hook registration) you can turn on lenient mode:</p>
+<pre class="prettyprint source lang-js"><code>var instance = grappling.create({
+    strict: false
+});</code></pre><h3>Other qualifiers</h3><p>By default <code>grappling-hook</code> registers <code>pre</code> and <code>post</code> methods, but you can configure other names if you want:</p>
+<pre class="prettyprint source lang-js"><code>var instance = grappling.create({
+    qualifiers: {
+        pre: 'before',
+        post: 'after'
+    }
+});
+
+//now use `before` and `after` instead of `pre` and `post`:
+
+instance.addHooks('save');
+instance.before('save', fn);
+instance.after('save', fn);
+instance.save();</code></pre><p>There's one caveat: you <em>have</em> to configure both or none.</p>
+<h3>Setting up thenable hooks</h3><p>If you want to use thenable hooks, you'll need to provide <code>grappling-hook</code> with a thenable factory function, since it's promise library agnostic (i.e. you can use it with any promise library you want).</p>
+<p>Just to be clear: you do NOT need to provide a thenable factory function in order to allow thenable middleware, this works out of the box.</p>
+<pre class="prettyprint source lang-js"><code>var P = require('bluebird');
+
+var instance = grappling.create({
+    createThenable: function (fn) {
+        return new P(fn);
+    }
+})
+
+instance.addThenableHooks({
+    save: function (filename) {
+        var p = new P(function (resolve, reject) {
+            // add code for saving
+        });
+        return p;
+    }
+});
+
+instance.save('examples.txt').then(function () {
+    console.log('Finished!');
+});</code></pre><h3>Error handling</h3><ul>
+<li><p>Errors thrown in middleware registered to synchronized hooks will bubble through</p>
+<pre class="prettyprint source lang-js"><code>  instance.pre('save', function () {
+      throw new Error('Oh noes!');
+  });
+  instance.callSyncHook('pre:save');</code></pre><pre class="prettyprint source lang-sh"><code>  # output:
+  Error: Oh noes!</code></pre></li>
+<li><p>Errors thrown in middleware registered to asynchronous hooks are available as the <code>err</code> object in the <code>callback</code>.</p>
+<pre class="prettyprint source lang-js"><code>  instance.pre('save', function () {
+      throw new Error('Oh noes!');
+  });
+  instance.callHook('pre:save', function (err) {
+      console.log('Error occurred:', err);
+  });</code></pre><pre class="prettyprint source lang-sh"><code>  # output:
+  Error occurred: Error: Oh noes!</code></pre></li>
+<li><p>Errors thrown in middleware registered to thenable hooks trigger the promise's rejectedHandler.</p>
+<pre class="prettyprint source lang-js"><code>  instance.pre('save', function () {
+      throw new Error('Oh noes!');
+  });
+  instance.callThenableHook('pre:save').then(null, function (err) {
+      console.log('Error occurred:', err);
+  });</code></pre><pre class="prettyprint source lang-sh"><code>  # output:
+  Error occurred: Error: Oh noes!</code></pre></li>
+<li><p>Async middleware can pass errors to their <code>next</code> (serial or parallel) or <code>done</code> (parallel only) callbacks, which will be passed as the <code>err</code> object parameter for asynchronous hooks:</p>
+<pre class="prettyprint source lang-js"><code>  //async serial
+  instance.pre('save', function (next) {
+      next(new Error('Oh noes!'));
+  });</code></pre><pre class="prettyprint source lang-js"><code>  //async parallel
+  instance.pre('save', function (next, done) {
+      next();
+      done(new Error('Oh noes!'));
+  });</code></pre><pre class="prettyprint source lang-js"><code>  instance.callHook('pre:save', function (err) {
+      if (err) {
+          console.log('An error occurred:', err);
+      }
+  });</code></pre><pre class="prettyprint source lang-sh"><code>  # output for both:
+  An error occurred: Oh noes!</code></pre></li>
+<li><p>Async middleware can pass errors to their <code>next</code> (serial or parallel) or <code>done</code> (parallel only) callbacks, which will trigger the rejectedHandler of thenable hooks:</p>
+<pre class="prettyprint source lang-js"><code>  //async serial
+  instance.pre('save', function (next) {
+      next(new Error('Oh noes!'));
+  });</code></pre><pre class="prettyprint source lang-js"><code>  //async parallel
+  instance.pre('save', function (next, done) {
+      next();
+      done(new Error('Oh noes!'));
+  });</code></pre><pre class="prettyprint source lang-js"><code>  instance.callThenableHook('pre:save').then(null, function (err) {
+      if (err) {
+          console.log('An error occurred:', err);
+      }
+  });</code></pre><pre class="prettyprint source lang-sh"><code>  # output for both:
+  An error occurred: Oh noes!</code></pre></li>
+<li><p>Thenable middleware can reject their promises, which will be passed as the <code>err</code> object parameter for asynchronous hooks:</p>
+<pre class="prettyprint source lang-js"><code>  instance.pre('save', function (next) {
+      var p = new Promise(function (succeed, fail) {
+          fail('Oh noes!');
+      });
+      return p;
+  });</code></pre><pre class="prettyprint source lang-js"><code>  instance.callHook('pre:save', function (err) {
+      if (err) {
+          console.log('An error occurred:', err);
+      }
+  });</code></pre><pre class="prettyprint source lang-sh"><code>  # output:
+  An error occurred: Oh noes!</code></pre></li>
+<li><p>Thenable middleware can reject their promises, which will trigger the rejectedHandler of thenable hooks:</p>
+<pre class="prettyprint source lang-js"><code>  instance.pre('save', function (next) {
+      var p = new Promise(function (succeed, fail) {
+          fail('Oh noes!');
+      });
+      return p;
+  });</code></pre><pre class="prettyprint source lang-js"><code>  instance.callThenableHook('pre:save').then(null, function (err) {
+      if (err) {
+          console.log('An error occurred:', err);
+      }
+  });</code></pre><pre class="prettyprint source lang-sh"><code>  # output for both:
+  An error occurred: Oh noes!</code></pre></li>
+</ul>
+<h3>Presets</h3><p>You can <a href="https://keystonejs.github.io/grappling-hook/module-grappling-hook.html#.set">set</a> and use preset configurations, in order to reuse them in your project.</p>
+<pre class="prettyprint source lang-js"><code>var presets = {
+    strict: false,
+    qualifiers: {
+        pre: 'before',
+        post: 'after'
+    }
+};
+var grappling = require('grappling-hook');
+grappling.set('grappling-hook:examples.presets', presets);
+
+//all grappling-hook factory methods accept a presetname:
+var instance = grappling.create('grappling-hook:examples.presets');
+
+instance.addSyncHooks({
+    save: function () {
+        console.log('Saving!');
+    }
+});
+
+instance.before('save', function () {
+    console.log('Before save!');
+}).after('save', function () {
+    console.log('After save!');
+}).save();</code></pre><pre class="prettyprint source lang-sh"><code># output:
+Before save!
+Saving!
+After save!</code></pre><p>If you want to override preset configuration options, just pass them to the factory function, as always:</p>
+<pre class="prettyprint source lang-js"><code>var instance = grappling.create('grappling-hook:examples.presets', {
+    strict: true
+});
+
+/*
+instance has the following configuration:
+{
+    strict: true,
+    qualifiers: {
+        pre: 'before',
+        post: 'after'
+    }
+}
+*/</code></pre><p>With <a href="https://keystonejs.github.io/grappling-hook/module-grappling-hook.html#.get">grappling-hook.get</a> you can introspect the configuration options of a preset:</p>
+<pre class="prettyprint source lang-js"><code>console.log(grappling.get('grappling-hook:examples.presets'));</code></pre><pre class="prettyprint source lang-sh"><code># output:
+{
+    strict: false,
+    qualifiers: {
+        pre: 'before',
+        post: 'after'
+    }
+}</code></pre><h2>Changelog</h2><p>See <a href="https://github.com/keystonejs/grappling-hook/blob/master/History.md">History.md</a></p>
+<h2>Contributing</h2><p>Pull requests welcome. Make sure you use the .editorconfig in your IDE of choice and please adhere to the coding style as defined in .eslintrc.</p>
+<ul>
+<li><code>npm test</code> for running the tests</li>
+<li><code>npm run lint</code> for running eslint</li>
+<li><code>npm run test-cov</code> for churning out test coverage. (We go for 100% here!)</li>
+<li><code>npm run docs</code> for generating the API docs</li>
+</ul></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-grappling-hook.html">grappling-hook</a></li></ul><h3>Mixins</h3><ul><li><a href="GrapplingHook.html">GrapplingHook</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Thu Aug 20 2015 10:58:28 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

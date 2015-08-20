@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3>grappling-hook 2.5.0</h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>grappling-hook</h1><p><a href="https://travis-ci.org/keystonejs/grappling-hook"><img src="https://travis-ci.org/keystonejs/grappling-hook.svg" alt="Build Status"></a>
+<a href="http://npmjs.org/packages/grappling-hook"><img src="https://badge.fury.io/js/grappling-hook.svg" alt="npm version"></a>
+<a href="https://coveralls.io/r/keystonejs/grappling-hook?branch=master"><img src="https://coveralls.io/repos/keystonejs/grappling-hook/badge.svg?branch=master" alt="Coverage Status"></a></p>
+<blockquote>
+<p>pre/post hooking enabler </p>
+</blockquote>
+<p><code>grappling-hook</code> allows you to add pre/post hooks to objects and prototypes.
+A number of modules already exist that allow you to do just the same, but the most popular one (<a href="https://www.npmjs.com/package/hooks">hooks</a>) is no longer maintained.
+Also, we wanted a more granular control of the hooking process and the way middleware is called.</p>
+<p><strong>NEW:</strong></p>
+<ul>
+<li>since v2.4 you can <a href="#adding-hooks-to-synchronized-methods">wrap sync methods</a> and <a href="#synchronized-hooks">call sync hooks</a>.</li>
+<li>since v2.3 you can <a href="#other-qualifiers">configure <code>grappling-hook</code> to use other method names</a> than <code>pre</code> or <code>post</code>, e.g. <code>before</code> and <code>after</code>.</li>
+</ul>
+<h2>Installation</h2><pre class="prettyprint source lang-sh"><code>$ npm install grappling-hook</code></pre><h2>Usage</h2><h4>Creating a <code>grappling-hook</code> object</h4><p>You can easily add methods to a new <code>grappling-hook</code> instance which are automatically ready for hooking up middleware:</p>
+<pre class="prettyprint source lang-js"><code>var grappling = require('grappling-hook');
+
+var instance = grappling.create(); // create an instance
+
+instance.addHooks({ // declare the hookable methods
+    save: function(done) {
+        console.log('save!');
+        done();
+    }
+});
+
+instance.pre('save', function() { //allow middleware to be registered for a hook
+    console.log('saving!');
+}).post('save', function() {
+    console.log('saved!');
+});
+
+instance.save(function(err) {
+    console.log('All done!!');
+});</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving!
+save!
+saved!
+All done!!</code></pre><h4>Using an existing object</h4><p>Or you can choose to enable hooking for an already existing object with methods:</p>
+<pre class="prettyprint source lang-js"><code>var grappling = require('grappling-hook');
+
+var instance = {
+    save: function(done) {
+        console.log('save!');
+        done();
+    }
+};
+
+grappling.mixin(instance); // add grappling-hook functionality to an existing object
+
+instance.addHooks('save'); // setup hooking for an existing method
+
+instance.pre('save', function() {
+    console.log('saving!');
+}).post('save', function() {
+    console.log('saved!');
+});
+
+instance.save(function(err) {
+    console.log('All done!!');
+});</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving!
+save!
+saved!
+All done!!</code></pre><h4>Using a 'class'</h4><p>Or you can patch a <code>prototype</code> with <code>grappling-hook</code> methods:</p>
+<pre class="prettyprint source lang-js"><code>var grappling = require('grappling-hook');
+
+var Clazz = function() {
+};
+Clazz.prototype.save = function(done) {
+    console.log('save!');
+    done();
+};
+
+grappling.attach(Clazz); // attach grappling-hook functionality to a 'class'
+
+var instance = new Clazz();
+instance.addHooks('save'); // setup hooking for an existing method
+
+instance.pre('save', function() {
+    console.log('saving!');
+}).post('save', function() {
+    console.log('saved!');
+});
+
+instance.save(function(err) {
+    console.log('All done!!');
+});</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving!
+save!
+saved!
+All done!!</code></pre><p>All of this is pretty standard stuff, there's two things to note here though:</p>
+<ol>
+<li>By default you <em>have</em> to be explicit about which methods you want to make hookable. (There's a more <em>lenient</em> mode as well though)</li>
+<li>Middleware doesn't have to accept a <code>next</code> callback, i.e. you can use sync functions as middleware too, as in the examples above.</li>
+</ol>
+<h4>Adding hooks to synchronized methods</h4><p><code>addSyncHooks</code> allows you to register methods for enforced synchronized middleware execution (<code>addHooks</code> allows mixing of both and will <em>always</em> finish async):</p>
+<pre class="prettyprint source lang-js"><code>var grappling = require('grappling-hook');
+
+var instance = {
+    saveSync: function(filename) {
+        filename = Date.now() + '-' + filename;
+        console.log('save', filename);
+        return filename;
+    }
+};
+
+grappling.mixin(instance); // add grappling-hook functionality to an existing object
+
+instance.addSyncHooks('saveSync'); // setup hooking for an existing (sync) method
+
+instance.pre('saveSync', function() {
+    console.log('saving!');
+}).post('saveSync', function() {
+    console.log('saved!');
+});
+
+var newName = instance.saveSync('example.txt');
+console.log('new name:', newName);</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving!
+save 1431264587725-example.txt
+saved!
+new name: 1431264587725-example.txt</code></pre><p>Middleware registered with synchronized hook will <strong>NOT</strong> receive <code>next</code> nor <code>done</code> callbacks, i.e. async serial or parallel middleware registration is not possible.</p>
+<h3>Adding middleware</h3><p>Middleware is added mainly with the <code>pre</code> and <code>post</code> methods. </p>
+<h4>Middleware types</h4><p><code>grappling-hook</code> allows you to add both sync and async functions, run in series or parallel. 
+The type of function is identified through the parameters it accepts:</p>
+<ul>
+<li><p><strong>Sync</strong>: no callbacks are accepted.</p>
+<pre class="prettyprint source lang-js"><code>  instance.pre('save', function(){
+      // will run synchronously, the next middleware will be executed immediately once this has finished
+  });</code></pre></li>
+<li><p><strong>Async serial</strong>: a single callback is accepted</p>
+<pre class="prettyprint source lang-js"><code>  instance.pre('save', function(next){
+      //execution of following middleware is halted until `next` is called
+      setTimeout(next, 1000);
+  });</code></pre></li>
+<li><p><strong>Async/sync parallel</strong>: two callbacks are accepted</p>
+<pre class="prettyprint source lang-js"><code>  instance.pre('save', function(next, done){
+      //execution of following middleware is halted until `next` is called
+      setTimeout(next, 500);
+      //the full middleware queue is considered finished once all parallel `done` callbacks have finished
+      setTimeout(done, 1000);
+  });</code></pre></li>
+</ul>
+<p>You can <strong>mix sync/async serial/parallel middleware</strong> any way you choose:</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save', function(next) {
+    //async serial
+    console.log('A setup');
+    setTimeout(function() {
+        console.log('A done');
+        next();
+    }, 100);
+}, function() {
+    //sync
+    console.log('B done');
+}, function(next, done) {
+    //async parallel
+    console.log('C setup');
+    setTimeout(function() {
+        console.log('C done');
+        done();
+    }, 200);
+    next();
+}, function(next, done) {
+    //async parallel
+    console.log('D setup');
+    setTimeout(function() {
+        console.log('D done');
+        done();
+    }, 30);
+    next();
+});</code></pre><pre class="prettyprint source lang-sh"><code># output
+A setup
+A done
+B done
+C setup
+D setup
+D done
+C done</code></pre><h4>Qualified hooks</h4><p>We've provided another (convenience) method to add middleware too: <code>hook</code>. It registers middleware to a qualified hook (e.g. <code>pre:save</code>).</p>
+<pre class="prettyprint source lang-js"><code>instance.hook('pre:save', function(){
+    console.log('pre');
+});
+instance.save(function(){
+    console.log('All done!!');
+});</code></pre><pre class="prettyprint source lang-sh"><code># output
+pre
+All done!!</code></pre><h4>Easy parameter passing</h4><p>We like to cater to many coding styles: all of the middleware addition methods accept any number of middleware to be added, either as parameters or as an array (or as a mix);</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save', fn1, fn2, [fn3, fn4], fn5);
+// equals:
+instance.pre('save', [fn1, fn2, fn3, fn4, fn5]);
+// equals:
+instance.pre('save', fn1, fn2, fn3, fn4, fn5);</code></pre><h3>Removing middleware</h3><p>You can remove middleware with the <code>unhook</code> method.</p>
+<pre class="prettyprint source lang-js"><code>//removes `logSave` function for &quot;pre:save&quot;
+instance.unhook(&quot;pre:save&quot;, logSave);
+
+//remove all middleware for &quot;pre:save&quot;
+instance.unhook(&quot;pre:save&quot;);
+
+//remove all middleware for &quot;save&quot;, i.e. both &quot;pre&quot; and &quot;post&quot;
+instance.unhook(&quot;save&quot;);
+
+//remove ALL middleware
+instance.unhook();</code></pre><h3>Manual calling of hooks</h3><p>Sometimes its beneficial to be able to call a hook manually, i.e. without adding hooking to a specific method. This allows for more complex and branched flows.</p>
+<pre class="prettyprint source lang-js"><code>var instance = grappling.create(); // create an instance
+
+instance.allowHooks('save'); // since we won't be wrapping a function with a hooking, we need to explicitly tell which hook will be available for middleware
+
+instance.pre('save', function(){
+    console.log('saving!');
+});
+
+instance.callHook('pre:save'); // &lt;--- let's run our middleware</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving!</code></pre><p><strong>N.B.</strong>: Only qualified hooks (e.g. &quot;pre:save&quot;, NOT &quot;save&quot;) are callable, since it doesn't really make sense to call both pre/post hooks consecutively, w/o doing anything in between.</p>
+<h4>parameters</h4><p>You can pass any number of parameters to your middleware:</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save', function(foo, bar){
+    console.log('saving!', foo, bar);
+});
+
+instance.callHook('pre:save', 'foo', { bar: 'bar'});</code></pre><pre class="prettyprint source lang-sh"><code># output:
+saving! foo { bar: 'bar' }</code></pre><p>Again, parameters are parsed forgivingly, e.g.:</p>
+<pre class="prettyprint source lang-js"><code>instance.callHook('pre:save', &quot;foo&quot;, { bar: &quot;bar&quot;});
+// equals:
+instance.callHook('pre:save', [&quot;foo&quot;, { bar: &quot;bar&quot;}]);
+// equals:
+instance.callHook('pre:save', [&quot;foo&quot;], { bar: &quot;bar&quot;});</code></pre><p>There's one caveat: <strong>if you wish to pass functions to your middleware, it's best to wrap them in an Array</strong>, since otherwise the last one will be regarded as a <em>final</em> callback, i.e. it won't be passed to the middleware, but will be executed once all middleware has finished.</p>
+<pre class="prettyprint source lang-js"><code>instance.callHook('pre:save', [fn1, fn2, fn3]);</code></pre><h4>context</h4><p>By default all middleware is called with the hooking instance as an execution context, e.g.:</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save', function(){
+    console.log(this);
+});
+
+instance.toString = function(){
+    return &quot;That's me!!&quot;;
+};
+instance.callHook('pre:save');</code></pre><pre class="prettyprint source lang-sh"><code># output:
+That's me!!</code></pre><p>However, <code>callHook</code> accepts a <code>context</code> parameter to change the scope:</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save', function() {
+    console.log(this);
+});
+
+instance.toString = function() {
+    return &quot;That's me!!&quot;;
+};
+
+var context = {
+    toString: function() {
+        return 'Different context!';
+    }
+};
+instance.callHook(context, 'pre:save');</code></pre><pre class="prettyprint source lang-sh"><code># output:
+Different context!
+All done!!</code></pre><h4>callback</h4><p>And last, but definitely not least, if you want to be able to respond to all middleware (sync/async serial/parallel) having completed their execution, you can pass a function as the last parameter to <code>callHook</code>:</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('save', function asyncMiddleware(next){
+    setTimeout(function(){
+        console.log('middleware');
+        next();
+    }, 100);
+});
+
+instance.callHook('pre:save', function(){
+    console.log(&quot;We're finished!&quot;);
+});</code></pre><pre class="prettyprint source lang-sh"><code># output:
+middleware
+We're finished!</code></pre><p>The full function signature of <code>callHook</code>:</p>
+<pre class="prettyprint source lang-js"><code>function callHook([context], qualifiedHook, [...params[]], [callback])
+// e.g.
+this.callHook(delegate, 'pre:save', &quot;foo&quot;, &quot;bar&quot;, {baz: qux}, this.save);</code></pre><h3>Synchronized hooks</h3><p>I you want to enforce a synchronized execution of hook middleware you can use <code>callSyncHook</code>.</p>
+<pre class="prettyprint source lang-js"><code>instance.pre('saveSync', function syncMiddleware(foo, bar){
+    console.log('middleware', foo, bar);
+});
+
+console.log('before callSyncHook');
+instance.callSyncHook('pre:saveSync', 'foo', 'bar');
+console.log('after callSyncHook');</code></pre><pre class="prettyprint source"><code># output:
+before callSyncHook
+middleware foo bar
+after callSyncHook</code></pre><p><code>callSyncHook</code> does <strong>NOT</strong> provide <code>next</code> nor <code>done</code> callbacks to the middleware, neither does it allow passing a &quot;final&quot; callback to the method itself.</p>
+<h3>Middleware introspection</h3><p>A number of methods are provided which allow you to introspect the added middleware and hooks.</p>
+<pre class="prettyprint source lang-js"><code>//returns all middleware functions registered for &quot;pre:save&quot;
+instance.getMiddleware(&quot;pre:save&quot;);
+
+//returns `true` if any middleware functions are registered for &quot;pre:save&quot;
+instance.hasMiddleware(&quot;pre:save&quot;);
+
+//return `true` if adding middleware to &quot;pre:save&quot; is allowed (with `allowHooks` or `addHooks`)
+instance.hookable(&quot;pre:save&quot;);</code></pre><h3>Lenient mode</h3><p>By default <code>grappling-hook</code> throws errors if you try to add middleware to or call a non-existing hook. However if you want to allow more leeway (for instance for dynamic delegated hook registration) you can turn on lenient mode:</p>
+<pre class="prettyprint source lang-js"><code>var instance = grappling.create({
+    strict: false
+});</code></pre><h3>Other qualifiers</h3><p>By default <code>grappling-hook</code> registers <code>pre</code> and <code>post</code> methods, but you can configure other names if you want:</p>
+<pre class="prettyprint source lang-js"><code>var instance = grappling.create({
+    qualifiers: {
+        pre: &quot;before&quot;,
+        post: &quot;after&quot;
+    }
+});
+
+//now use `before` and `after` instead of `pre` and `post`:
+
+instance.addHooks(&quot;save&quot;);
+instance.before(&quot;save&quot;, fn);
+instance.after(&quot;save&quot;, fn);
+instance.save();</code></pre><p>There's one caveat: you <em>have</em> to configure both or none.</p>
+<h3>Error handling</h3><ul>
+<li><p>Errors thrown in sync middleware will bubble through </p>
+<pre class="prettyprint source lang-js"><code>  instance.pre('save', function(){
+      throw new Error('Oh noes!');
+  });
+  instance.callHook('pre:save');</code></pre><pre class="prettyprint source lang-sh"><code>  # output:
+  Error: Oh noes!</code></pre></li>
+<li><p>async middleware can pass errors to their <code>next</code> (serial or parallel) or <code>done</code> (parallel only) callbacks:</p>
+<pre class="prettyprint source lang-js"><code>  //async serial
+  instance.pre('save', function(next){
+      next(new Error(&quot;Oh noes!&quot;));
+  });</code></pre><pre class="prettyprint source lang-js"><code>  //async parallel
+  instance.pre('save', function(next, done){
+      next();
+      done(new Error(&quot;Oh noes!&quot;));
+  });</code></pre><pre class="prettyprint source lang-js"><code>  instance.callHook('pre:save', function(err){
+      if(err){
+          console.log('An error occurred:', err);
+      }
+  });</code></pre><pre class="prettyprint source lang-sh"><code>  # output for both:
+  An error occurred: Oh noes!</code></pre></li>
+</ul></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-grappling-hook.html">grappling-hook</a></li></ul><h3>Mixins</h3><ul><li><a href="GrapplingHook.html">GrapplingHook</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Tue Jun 30 2015 14:45:22 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
