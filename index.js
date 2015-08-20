@@ -64,10 +64,15 @@
  */
 
 /**
- * 
+ * The GrapplingHook documentation uses the term "thenable" instead of "promise", since what we need here is not _necessarily_ a promise, but a thenable, as defined in the <a href="https://promisesaplus.com/">Promises A+ spec</a>.
+ * Thenable middleware for instance can be _any_ object that has a `then` function.
+ * Strictly speaking the only instance where we adhere to the full Promises A+ definition of a promise is in {@link options}.createThenable. 
+ * For reasons of clarity, uniformity and symmetry we chose `createThenable`, although strictly speaking it should've been `createPromise`.
+ * Most people would find it confusing if part of the API uses 'thenable' and another part 'promise'.
  * @typedef {Object} thenable
- * @property {Function} then - see Promises A+ spec
+ * @property {Function} then - see <a href="https://promisesaplus.com/">Promises A+ spec</a>
  * @see {@link options}.createThenable
+ * @see {@link module:grappling-hook.isThenable isThenable}
  */
 
 var _ = require('lodash');
@@ -719,28 +724,28 @@ module.exports = {
 	},
 
 	/**
-	 * Attaches {@link GrapplingHook} methods to `clazz`'s `prototype`.
+	 * Attaches {@link GrapplingHook} methods to `base`'s `prototype`.
 	 * @see {@link module:grappling-hook.create create} for creating {@link GrapplingHook} instances.
 	 * @see {@link module:grappling-hook.mixin mixin} for mixing {@link GrapplingHook} methods into instances.
-	 * @param {Function} clazz
+	 * @param {Function} base
 	 * @param {string} [presets] - presets name, see {@link module:grappling-hook.set set}
 	 * @param {options} [opts] - {@link options}.
 	 * @mixes GrapplingHook
 	 * @returns {Function}
 	 * @example
 	 * var grappling = require('grappling-hook');
-	 * var Clazz = function() {
+	 * var MyClass = function() {
 	 * };
-	 * Clazz.prototype.save = function(done) {
+	 * MyClass.prototype.save = function(done) {
 	 *   console.log('save!');
 	 *   done();
 	 * };
-	 * grappling.attach(Clazz); // attach grappling-hook functionality to a 'class'
+	 * grappling.attach(MyClass); // attach grappling-hook functionality to a 'class'
 	 */
-	attach: function attach(clazz, presets, opts) {//eslint-disable-line no-unused-vars
+	attach: function attach(base, presets, opts) {//eslint-disable-line no-unused-vars
 		var args = _.toArray(arguments);
 		args.shift();
-		var proto = (clazz.prototype) ? clazz.prototype : clazz;
+		var proto = (base.prototype) ? base.prototype : base;
 		_.each(methods, function(fn, methodName) {
 			proto[methodName] = function() {
 				init.apply(this, args);
@@ -750,7 +755,7 @@ module.exports = {
 				return fn.apply(this, _.toArray(arguments));
 			};
 		});
-		return clazz;
+		return base;
 	},
 
 	/**
