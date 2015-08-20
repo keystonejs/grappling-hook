@@ -10,7 +10,7 @@
     "travis": "npm run lint && npm test",
     "coveralls": "npm run test-cov;cat ./coverage/lcov.info | coveralls",
     "docs": "jsdoc -c jsdoc.json -R README.md",
-    "gh-pages": "git subtree push --prefix docs origin gh-pages"
+    "gh-pages": "grunt gh-pages"
   },
   "repository": {
     "type": "git",
@@ -36,6 +36,8 @@
     "bluebird": "^2.9.25",
     "coveralls": "^2.11.2",
     "eslint": "^0.23.0",
+    "grunt": "^0.4.5",
+    "grunt-gh-pages": "^0.10.0",
     "istanbul": "^0.3.15",
     "jsdoc": "^3.3.2",
     "mocha": "^2.2.5",
