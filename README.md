@@ -301,16 +301,16 @@ You can patch a `prototype` with `grappling-hook` methods:
 ```js
 var grappling = require('grappling-hook');
 
-var Clazz = function () {};
+var MyClass = function () {};
 
-Clazz.prototype.save = function (done) {
+MyClass.prototype.save = function (done) {
 	console.log('save!');
 	done();
 };
 
-grappling.attach(Clazz); // attach grappling-hook functionality to a 'class'
+grappling.attach(MyClass); // attach grappling-hook functionality to a 'class'
 
-var instance = new Clazz();
+var instance = new MyClass();
 instance.addHooks('save'); // setup hooking for an existing method
 
 instance.pre('save', function () {
