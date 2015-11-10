@@ -25,9 +25,9 @@
   "author": "Camille Reynders",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/keystonejs/keystone-hooks/issues"
+    "url": "https://github.com/keystonejs/grappling-hook/issues"
   },
-  "homepage": "https://github.com/keystonejs/keystone-hooks",
+  "homepage": "https://github.com/keystonejs/grappling-hook",
   "dependencies": {
     "async": "^0.9.0",
     "lodash": "^3.9.3"
