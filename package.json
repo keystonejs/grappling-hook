@@ -35,7 +35,7 @@
   "devDependencies": {
     "bluebird": "^2.9.25",
     "coveralls": "^2.11.2",
-    "eslint": "^0.23.0",
+    "eslint": "^1.10.3",
     "grunt": "^0.4.5",
     "grunt-gh-pages": "^0.10.0",
     "istanbul": "^0.3.15",
