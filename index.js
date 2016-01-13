@@ -1,3 +1,12 @@
+/*!
+ * grappling-hook
+ * https://github.com/keystonejs/grappling-hook
+ *
+ * Copyright 2015-2016 Keystone.js
+ * Released under the MIT license
+ * 
+ */
+
 'use strict';
 
 /**
@@ -76,7 +85,75 @@
  */
 
 const _ = require('lodash');
-const async = require('async');
+let async = {};
+
+/*!
+ *=====================================
+ * Parts copied from/based on         *
+ *=====================================
+ * 
+ * async
+ * https://github.com/caolan/async
+ *
+ * Copyright 2010-2014 Caolan McMahon
+ * Released under the MIT license
+ */
+/**
+ * 
+ * @param {{}} tasks - MUST BE OBJECT
+ * @param {function} callback
+ */
+async.series = function(tasks, callback) {
+	callback = callback || _.noop;
+	var results = {};
+	async.eachSeries(_.keys(tasks), function(k, callback) {
+		tasks[k](function(err) {
+			var args = Array.prototype.slice.call(arguments, 1);
+			if (args.length <= 1) {
+				args = args[0];
+			}
+			results[k] = args;
+			callback(err);
+		});
+	}, function(err) {
+		callback(err, results);
+	});
+};
+/**
+ * 
+ * @param {[]} arr
+ * @param {function} iterator
+ * @param {function} callback
+ * @returns {*}
+ */
+async.eachSeries = function(arr, iterator, callback) {
+	callback = callback || _.noop;
+	if (!arr.length) {
+		return callback();
+	}
+	var completed = 0;
+	var iterate = function() {
+		iterator(arr[completed], function(err) {
+			if (err) {
+				callback(err);
+				callback = _.noop;
+			}
+			else {
+				completed += 1;
+				if (completed >= arr.length) {
+					callback();
+				}
+				else {
+					iterate();
+				}
+			}
+		});
+	};
+	iterate();
+};
+/*!
+ *=====================================
+ */
 
 const presets = {};
 
