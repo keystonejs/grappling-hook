@@ -4,7 +4,7 @@
   "description": "Pre/Post hooking mechanism",
   "main": "index.js",
   "scripts": {
-    "test": "mocha tests",
+    "test": "mocha tests --bail",
     "lint": "eslint index.js tests",
     "test-cov": "istanbul cover _mocha tests",
     "travis": "npm run lint && npm test",
