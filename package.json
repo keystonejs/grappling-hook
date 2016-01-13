@@ -45,5 +45,8 @@
     "require-directory": "^2.1.0",
     "sinon": "^1.14.1"
   },
-  "tonicExampleFilename": "tonicExample.js"
+  "tonicExampleFilename": "tonicExample.js",
+  "engines": {
+    "node": ">=4.0.0"
+  }
 }
