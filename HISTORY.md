@@ -1,5 +1,9 @@
 # GrapplingHook Changelog
 
+## v4.0.0 / 
+
+* changed; BREAKING - Restrict to node >= v4
+
 ## v3.0.0 / 2015-08-20
 
 * changed; BREAKING - remove parameter flattening from `callHook`, `callSyncHook` and `callThenableHook`
