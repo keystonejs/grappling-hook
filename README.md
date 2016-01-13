@@ -752,7 +752,7 @@ console.log(grappling.get('grappling-hook:examples.presets'));
 
 ## Changelog
 
-See [History.md](https://github.com/keystonejs/grappling-hook/blob/master/History.md)
+See [History.md](https://github.com/keystonejs/grappling-hook/blob/master/HISTORY.md)
 
 ## Contributing
 
