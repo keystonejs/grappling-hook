@@ -66,7 +66,7 @@
 /**
  * The GrapplingHook documentation uses the term "thenable" instead of "promise", since what we need here is not _necessarily_ a promise, but a thenable, as defined in the <a href="https://promisesaplus.com/">Promises A+ spec</a>.
  * Thenable middleware for instance can be _any_ object that has a `then` function.
- * Strictly speaking the only instance where we adhere to the full Promises A+ definition of a promise is in {@link options}.createThenable. 
+ * Strictly speaking the only instance where we adhere to the full Promises A+ definition of a promise is in {@link options}.createThenable.
  * For reasons of clarity, uniformity and symmetry we chose `createThenable`, although strictly speaking it should've been `createPromise`.
  * Most people would find it confusing if part of the API uses 'thenable' and another part 'promise'.
  * @typedef {Object} thenable
@@ -81,7 +81,9 @@ var async = require('async');
 var presets = {};
 
 function parseHook(hook) {
-	var parsed = (hook) ? hook.split(':') : [];
+	var parsed = (hook) 
+		? hook.split(':') 
+		: [];
 	var n = parsed.length;
 	return {
 		type: parsed[n - 2],
@@ -144,10 +146,10 @@ function attachQualifier(instance, qualifier) {
 		var fns = _.toArray(arguments);
 		var hookName = fns.shift();
 		var output;
-		if(fns.length){ //old skool way with callbacks
+		if (fns.length) { //old skool way with callbacks
 			output = this;
-		}else{
-			output = this.__grappling.opts.createThenable(function(resolve){
+		} else {
+			output = this.__grappling.opts.createThenable(function(resolve) {
 				fns = [resolve];
 			});
 		}
@@ -167,13 +169,13 @@ function init(name, opts) {
 	}
 	this.__grappling = {
 		middleware: {},
-		opts: _.defaults({}, opts, presets, {
-			strict: true,
-			qualifiers: {
-				pre: 'pre',
+		opts      : _.defaults({}, opts, presets, {
+			strict        : true,
+			qualifiers    : {
+				pre : 'pre',
 				post: 'post'
 			},
-			createThenable: function(){
+			createThenable: function() {
 				throw new Error('Instance not set up for thenable creation, please set `opts.createThenable`');
 			}
 		})
@@ -251,7 +253,9 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 				}
 		}
 	}, function(err) {
-		asyncFinished = (err) ? done : true;
+		asyncFinished = (err) 
+			? done 
+			: true;
 		if (err || !waiting.length) {
 			done(err);
 		}
@@ -259,7 +263,7 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 }
 
 function iterateSyncMiddleware(context, middleware, args) {
-	_.each(middleware, function(callback) {
+	_.forEach(middleware, function(callback) {
 		callback.apply(context, args);
 	});
 }
@@ -279,7 +283,7 @@ function qualifyHook(hookObj) {
 
 function createHooks(instance, config) {
 	var q = instance.__grappling.opts.qualifiers;
-	_.each(config, function(fn, hook) {
+	_.forEach(config, function(fn, hook) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
 			var args = _.toArray(arguments);
@@ -310,7 +314,7 @@ function createHooks(instance, config) {
 
 function createSyncHooks(instance, config) {
 	var q = instance.__grappling.opts.qualifiers;
-	_.each(config, function(fn, hook) {
+	_.forEach(config, function(fn, hook) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
 			var args = _.toArray(arguments);
@@ -329,7 +333,7 @@ function createSyncHooks(instance, config) {
 function createThenableHooks(instance, config) {
 	var opts = instance.__grappling.opts;
 	var q = instance.__grappling.opts.qualifiers;
-	_.each(config, function(fn, hook) {
+	_.forEach(config, function(fn, hook) {
 		var hookObj = parseHook(hook);
 		instance[hookObj.name] = function() {
 			var args = _.toArray(arguments);
@@ -353,7 +357,7 @@ function createThenableHooks(instance, config) {
 				}
 				return deferred.resolve(deferred.result);
 			});
-			
+
 			return thenable;
 		};
 	});
@@ -361,7 +365,7 @@ function createThenableHooks(instance, config) {
 
 function addHooks(instance, args) {
 	var config = {};
-	_.each(args, function(mixed) {
+	_.forEach(args, (mixed) => {
 		if (_.isString(mixed)) {
 			var hookObj = parseHook(mixed);
 			var fn = instance[hookObj.name];
@@ -372,16 +376,18 @@ function addHooks(instance, args) {
 		} else {
 			throw new Error('`addHooks` expects (arrays of) Strings or Objects');
 		}
-	}, instance);
+	});
 	instance.allowHooks(_.keys(config));
 	return config;
 }
 
 function parseCallHookParams(instance, args) {
 	return {
-		context: (_.isString(args[0])) ? instance : args.shift(),
-		hook: args.shift(),
-		args: args
+		context: (_.isString(args[0])) 
+			? instance 
+			: args.shift(),
+		hook   : args.shift(),
+		args   : args
 	};
 }
 
@@ -412,10 +418,10 @@ var methods = {
 		var hook = fns.shift();
 		var output;
 		qualifyHook(parseHook(hook));
-		if(fns.length){
+		if (fns.length) {
 			output = this;
-		}else{
-			output = this.__grappling.opts.createThenable(function(resolve){
+		} else {
+			output = this.__grappling.opts.createThenable(function(resolve) {
 				fns = [resolve];
 			});
 		}
@@ -450,14 +456,16 @@ var methods = {
 		var q = this.__grappling.opts.qualifiers;
 		if (hookObj.type || fns.length) {
 			qualifyHook(hookObj);
-			if (middleware[hook]) middleware[hook] = (fns.length ) ? _.without.apply(null, [middleware[hook]].concat(fns)) : [];
+			if (middleware[hook]) middleware[hook] = (fns.length)
+				? _.without.apply(null, [middleware[hook]].concat(fns))
+				: [];
 		} else if (hookObj.name) {
 			/* istanbul ignore else: nothing _should_ happen */
 			if (middleware[q.pre + ':' + hookObj.name]) middleware[q.pre + ':' + hookObj.name] = [];
 			/* istanbul ignore else: nothing _should_ happen */
 			if (middleware[q.post + ':' + hookObj.name]) middleware[q.post + ':' + hookObj.name] = [];
 		} else {
-			_.each(middleware, function(callbacks, hook) {
+			_.forEach(middleware, (callbacks, hook) => {
 				middleware[hook] = [];
 			});
 		}
@@ -475,10 +483,10 @@ var methods = {
 			return true;
 		}
 		var args = _.flatten(_.toArray(arguments));
-		return _.every(args, function(qualifiedHook) {
+		return _.every(args, (qualifiedHook) => {
 			qualifyHook(parseHook(qualifiedHook));
 			return !!this.__grappling.middleware[qualifiedHook];
-		}, this);
+		});
 	},
 
 	/**
@@ -490,7 +498,7 @@ var methods = {
 	allowHooks: function() {
 		var args = _.flatten(_.toArray(arguments));
 		var q = this.__grappling.opts.qualifiers;
-		_.each(args, function(hook) {
+		_.forEach(args, (hook) => {
 			if (!_.isString(hook)) {
 				throw new Error('`allowHooks` expects (arrays of) Strings');
 			}
@@ -505,7 +513,7 @@ var methods = {
 				middleware[q.pre + ':' + hookObj.name] = middleware[q.pre + ':' + hookObj.name] || [];
 				middleware[q.post + ':' + hookObj.name] = middleware[q.post + ':' + hookObj.name] || [];
 			}
-		}, this);
+		});
 		return this;
 	},
 
@@ -578,13 +586,15 @@ var methods = {
 	callHook: function() {
 		//todo: decide whether we should enforce passing a callback
 		var params = parseCallHookParams(this, _.toArray(arguments));
-		params.done = (_.isFunction(params.args[params.args.length - 1])) ? params.args.pop() : null;
-		if(params.done){
+		params.done = (_.isFunction(params.args[params.args.length - 1]))
+			? params.args.pop()
+			: null;
+		if (params.done) {
 			var self = this;
 			dezalgofy(function(safeDone) {
 				iterateAsyncMiddleware(params.context, self.getMiddleware(params.hook), params.args, safeDone);
 			}, params.done);
-		}else{
+		} else {
 			iterateAsyncMiddleware(params.context, this.getMiddleware(params.hook), params.args);
 		}
 		return this;
@@ -704,7 +714,7 @@ module.exports = {
 		var args = _.toArray(arguments);
 		instance = args.shift();
 		init.apply(instance, args);
-		_.extend(instance, methods);
+		_.assignIn(instance, methods);
 		return instance;
 	},
 
@@ -745,13 +755,15 @@ module.exports = {
 	attach: function attach(base, presets, opts) {//eslint-disable-line no-unused-vars
 		var args = _.toArray(arguments);
 		args.shift();
-		var proto = (base.prototype) ? base.prototype : base;
-		_.each(methods, function(fn, methodName) {
+		var proto = (base.prototype) 
+			? base.prototype 
+			: base;
+		_.forEach(methods, function(fn, methodName) {
 			proto[methodName] = function() {
 				init.apply(this, args);
-				_.each(methods, function(fn, methodName) {
+				_.forEach(methods, (fn, methodName) => {
 					this[methodName] = fn.bind(this);
-				}, this);
+				});
 				return fn.apply(this, _.toArray(arguments));
 			};
 		});
