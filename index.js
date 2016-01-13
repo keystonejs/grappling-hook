@@ -455,9 +455,11 @@ const methods = {
 		const q = this.__grappling.opts.qualifiers;
 		if (hookObj.type || fns.length) {
 			qualifyHook(hookObj);
-			if (middleware[hook]) middleware[hook] = (fns.length)
-				? _.without.apply(null, [middleware[hook]].concat(fns))
-				: [];
+			if (middleware[hook]) {
+				middleware[hook] = (fns.length)
+					? _.without.apply(null, [middleware[hook]].concat(fns))
+					: [];
+			}
 		} else if (hookObj.name) {
 			/* istanbul ignore else: nothing _should_ happen */
 			if (middleware[q.pre + ':' + hookObj.name]) middleware[q.pre + ':' + hookObj.name] = [];
