@@ -40,7 +40,7 @@
     "istanbul": "^0.4.2",
     "jsdoc": "^3.3.2",
     "mocha": "^2.2.5",
-    "must": "^0.12.0",
+    "must": "^0.13.2",
     "require-directory": "^2.1.0",
     "sinon": "^1.14.1"
   },
