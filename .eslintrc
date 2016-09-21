@@ -1,24 +1,24 @@
 {
   "env": {
-	"browser": true,
-	"node": true,
-	"es6": true
+    "browser": true,
+    "node": true,
+    "es6": true
   },
   "rules": {
-	"curly": [
-	  2,
-	  "multi-line"
-	],
-	"no-shadow": 0,
-	"no-trailing-spaces": 0,
-	"no-underscore-dangle": 0,
-	"no-unused-expressions": 0,
-	"quotes": [
-	  2,
-	  "single",
-	  "avoid-escape"
-	],
-	"semi": 2,
-	"strict": 0
+    "curly": [
+      2,
+      "multi-line"
+    ],
+    "no-shadow": 0,
+    "no-trailing-spaces": 0,
+    "no-underscore-dangle": 0,
+    "no-unused-expressions": 0,
+    "quotes": [
+      2,
+      "single",
+      "avoid-escape"
+    ],
+    "semi": 2,
+    "strict": 0
   }
 }
