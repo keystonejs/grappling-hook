@@ -33,15 +33,10 @@
     "lodash": "^4.16.1"
   },
   "devDependencies": {
-<<<<<<< b8faee2e22cc52426e5b649a3b18baee9f168a60
-    "bluebird": "^3.4.6",
-    "coveralls": "^2.11.14",
-=======
     "babel-cli": "^6.14.0",
     "babel-preset-es2015": "^6.14.0",
     "bluebird": "^3.1.1",
     "coveralls": "^2.11.2",
->>>>>>> Added babel and babel build script
     "eslint": "^2.1.0",
     "grunt": "^0.4.5",
     "grunt-gh-pages": "^0.10.0",
