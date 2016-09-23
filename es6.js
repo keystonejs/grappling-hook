@@ -99,7 +99,7 @@ let async = {};
  * Released under the MIT license
  */
 /**
- * 
+ *
  * @param {{}} tasks - MUST BE OBJECT
  * @param {function} callback
  */
@@ -108,7 +108,11 @@ async.series = function(tasks, callback) {
 	var results = {};
 	async.eachSeries(_.keys(tasks), function(k, callback) {
 		tasks[k](function(err) {
-			var args = Array.prototype.slice.call(arguments, 1);
+			//optimised to avoid arguments leakage
+			let args = new Array(arguments.length);
+			for (let i = 1; i < args.length; i++) {
+				args[i] = arguments[i];
+			}
 			if (args.length <= 1) {
 				args = args[0];
 			}
@@ -120,7 +124,7 @@ async.series = function(tasks, callback) {
 	});
 };
 /**
- * 
+ *
  * @param {[]} arr
  * @param {function} iterator
  * @param {function} callback
@@ -283,7 +287,7 @@ function dezalgofy(fn, done) {
 
 function iterateAsyncMiddleware(context, middleware, args, done) {
 	done = done || function(err) {
-			/* istanbul ignore next: untestable */ 
+			/* istanbul ignore next: untestable */
 			if (err) {
 				throw err;
 			}
@@ -340,7 +344,7 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 }
 
 function iterateSyncMiddleware(context, middleware, args) {
-	_.forEach(middleware, function(callback) {
+	middleware.forEach(function(callback) {
 		callback.apply(context, args);
 	});
 }
@@ -664,7 +668,12 @@ const methods = {
 	 */
 	callHook: function() {
 		//todo: decide whether we should enforce passing a callback
-		const params = parseCallHookParams(this, _.toArray(arguments));
+		let i = arguments.length;
+		const args = [];
+		while (i--) {
+			args[i] = arguments[i];
+		}
+		const params = parseCallHookParams(this, args);
 		params.done = (_.isFunction(params.args[params.args.length - 1]))
 			? params.args.pop()
 			: null;
@@ -690,7 +699,12 @@ const methods = {
 	 * @returns {GrapplingHook}
 	 */
 	callSyncHook: function() {
-		const params = parseCallHookParams(this, _.toArray(arguments));
+		let i = arguments.length;
+		const args = [];
+		while (i--) {
+			args[i] = arguments[i];
+		}
+		const params = parseCallHookParams(this, args);
 		iterateSyncMiddleware(params.context, this.getMiddleware(params.hook), params.args);
 		return this;
 	},
@@ -788,7 +802,10 @@ module.exports = {
 	 * grappling.mixin(instance); // add grappling-hook functionality to an existing object
 	 */
 	mixin: function mixin(instance, presets, opts) {//eslint-disable-line no-unused-vars
-		const args = _.toArray(arguments);
+		const args = new Array(arguments.length);
+		for (let i = 0; i < args.length; ++i) {
+			args[i] = arguments[i];
+		}
 		instance = args.shift();
 		init.apply(instance, args);
 		_.assignIn(instance, methods);
@@ -807,7 +824,14 @@ module.exports = {
 	 * var instance = grappling.create(); // create an instance
 	 */
 	create: function create(presets, opts) {//eslint-disable-line no-unused-vars
-		return module.exports.mixin.apply(null, [{}].concat(_.toArray(arguments)));
+		const args = new Array(arguments.length);
+		for (let i = 0; i < args.length; ++i) {
+			args[i] = arguments[i];
+		}
+		const instance = {};
+		init.apply(instance, args);
+		_.assignIn(instance, methods);
+		return instance;
 	},
 
 	/**
@@ -830,7 +854,10 @@ module.exports = {
 	 * grappling.attach(MyClass); // attach grappling-hook functionality to a 'class'
 	 */
 	attach: function attach(base, presets, opts) {//eslint-disable-line no-unused-vars
-		const args = _.toArray(arguments);
+		var args = new Array(arguments.length);
+		for (var i = 0; i < args.length; ++i) {
+			args[i] = arguments[i];
+		}
 		args.shift();
 		const proto = (base.prototype)
 			? base.prototype

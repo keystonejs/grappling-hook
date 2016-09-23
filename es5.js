@@ -99,7 +99,7 @@ var async = {};
  * Released under the MIT license
  */
 /**
- * 
+ *
  * @param {{}} tasks - MUST BE OBJECT
  * @param {function} callback
  */
@@ -108,7 +108,11 @@ async.series = function (tasks, callback) {
 	var results = {};
 	async.eachSeries(_.keys(tasks), function (k, callback) {
 		tasks[k](function (err) {
-			var args = Array.prototype.slice.call(arguments, 1);
+			//optimised to avoid arguments leakage
+			var args = new Array(arguments.length);
+			for (var i = 1; i < args.length; i++) {
+				args[i] = arguments[i];
+			}
 			if (args.length <= 1) {
 				args = args[0];
 			}
@@ -120,7 +124,7 @@ async.series = function (tasks, callback) {
 	});
 };
 /**
- * 
+ *
  * @param {[]} arr
  * @param {function} iterator
  * @param {function} callback
@@ -337,7 +341,7 @@ function iterateAsyncMiddleware(context, middleware, args, done) {
 }
 
 function iterateSyncMiddleware(context, middleware, args) {
-	_.forEach(middleware, function (callback) {
+	middleware.forEach(function (callback) {
 		callback.apply(context, args);
 	});
 }
@@ -664,7 +668,12 @@ var methods = {
 		var _this3 = this;
 
 		//todo: decide whether we should enforce passing a callback
-		var params = parseCallHookParams(this, _.toArray(arguments));
+		var i = arguments.length;
+		var args = [];
+		while (i--) {
+			args[i] = arguments[i];
+		}
+		var params = parseCallHookParams(this, args);
 		params.done = _.isFunction(params.args[params.args.length - 1]) ? params.args.pop() : null;
 		if (params.done) {
 			dezalgofy(function (safeDone) {
@@ -688,7 +697,12 @@ var methods = {
   * @returns {GrapplingHook}
   */
 	callSyncHook: function callSyncHook() {
-		var params = parseCallHookParams(this, _.toArray(arguments));
+		var i = arguments.length;
+		var args = [];
+		while (i--) {
+			args[i] = arguments[i];
+		}
+		var params = parseCallHookParams(this, args);
 		iterateSyncMiddleware(params.context, this.getMiddleware(params.hook), params.args);
 		return this;
 	},
@@ -789,7 +803,10 @@ module.exports = {
   */
 	mixin: function mixin(instance, presets, opts) {
 		//eslint-disable-line no-unused-vars
-		var args = _.toArray(arguments);
+		var args = new Array(arguments.length);
+		for (var i = 0; i < args.length; ++i) {
+			args[i] = arguments[i];
+		}
 		instance = args.shift();
 		init.apply(instance, args);
 		_.assignIn(instance, methods);
@@ -809,7 +826,14 @@ module.exports = {
   */
 	create: function create(presets, opts) {
 		//eslint-disable-line no-unused-vars
-		return module.exports.mixin.apply(null, [{}].concat(_.toArray(arguments)));
+		var args = new Array(arguments.length);
+		for (var i = 0; i < args.length; ++i) {
+			args[i] = arguments[i];
+		}
+		var instance = {};
+		init.apply(instance, args);
+		_.assignIn(instance, methods);
+		return instance;
 	},
 
 	/**
@@ -833,7 +857,10 @@ module.exports = {
   */
 	attach: function attach(base, presets, opts) {
 		//eslint-disable-line no-unused-vars
-		var args = _.toArray(arguments);
+		var args = new Array(arguments.length);
+		for (var i = 0; i < args.length; ++i) {
+			args[i] = arguments[i];
+		}
 		args.shift();
 		var proto = base.prototype ? base.prototype : base;
 		_.forEach(methods, function (fn, methodName) {
