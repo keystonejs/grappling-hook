@@ -279,7 +279,8 @@ function dezalgofy(fn, done) {
 }
 
 function iterateAsyncMiddleware(context, middleware, args, done) {
-	done = done || /* istanbul ignore next: untestable */function (err) {
+	done = done || function (err) {
+		/* istanbul ignore next: untestable */
 		if (err) {
 			throw err;
 		}
