@@ -23,6 +23,8 @@ $ npm install grappling-hook
 
 ## Usage
 
+Simply `require('grappling-hook')`. Or `require('grappling-hook/es6)` if you want the ES6 (yeah, yeah, ES2015 or whatever) version.
+
 From here on `grappling-hook` refers to the module itself (i.e. what you get when you `require('grappling-hook')`) and `GrapplingHook` refers to any GrapplingHook object (i.e. an object which allows you to register `pre` and `post` middleware, et cetera)
 
 `grappling-hook` and `GrapplingHook` expose two different API's:
