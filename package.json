@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run build && mocha tests --bail",
-    "lint": "eslint index.js tests",
+    "lint": "eslint *.js tests && echo 'Linting ready!'",
     "test-cov": "istanbul cover _mocha tests",
     "travis": "npm run lint && npm test",
     "coveralls": "npm run test-cov;cat ./coverage/lcov.info | coveralls",
