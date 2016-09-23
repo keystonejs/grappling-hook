@@ -446,7 +446,7 @@ function createThenableHooks(instance, config) {
 
 function addHooks(instance, args) {
 	const config = {};
-	_.forEach(args, (mixed) => {
+	_.forEach(args, function(mixed) {
 		if (_.isString(mixed)) {
 			const hookObj = parseHook(mixed);
 			const fn = instance[hookObj.name];
@@ -548,7 +548,7 @@ const methods = {
 			/* istanbul ignore else: nothing _should_ happen */
 			if (middleware[q.post + ':' + hookObj.name]) middleware[q.post + ':' + hookObj.name] = [];
 		} else {
-			_.forEach(middleware, (callbacks, hook) => {
+			_.forEach(middleware, function(callbacks, hook) {
 				middleware[hook] = [];
 			});
 		}
@@ -729,7 +729,7 @@ const methods = {
 		});
 		dezalgofy((safeDone) => {
 			iterateAsyncMiddleware(params.context, this.getMiddleware(params.hook), params.args, safeDone);
-		}, (err) => {
+		}, function(err) {
 			if (err) {
 				return deferred.reject(err);
 			}
