@@ -4,13 +4,17 @@
   "description": "Pre/Post hooking mechanism",
   "main": "index.js",
   "scripts": {
+    "preversion": "npm run build",
+    "pretest": "npm run build",
     "test": "mocha tests --bail",
-    "lint": "eslint index.js tests",
+    "lint": "eslint *.js tests && echo 'Linting ready!'",
+    "pretest-cov": "npm run build",
     "test-cov": "istanbul cover _mocha tests",
     "travis": "npm run lint && npm test",
     "coveralls": "npm run test-cov;cat ./coverage/lcov.info | coveralls",
     "docs": "jsdoc -c jsdoc.json -R README.md",
-    "gh-pages": "grunt gh-pages"
+    "gh-pages": "grunt gh-pages",
+    "build": "babel es6.js -o es5.js"
   },
   "repository": {
     "type": "git",
@@ -32,8 +36,10 @@
     "lodash": "^4.16.1"
   },
   "devDependencies": {
-    "bluebird": "^3.4.6",
-    "coveralls": "^2.11.14",
+    "babel-cli": "^6.14.0",
+    "babel-preset-es2015": "^6.14.0",
+    "bluebird": "^3.1.1",
+    "coveralls": "^2.11.2",
     "eslint": "^2.1.0",
     "grunt": "^0.4.5",
     "grunt-gh-pages": "^0.10.0",
@@ -44,8 +50,5 @@
     "require-directory": "^2.1.1",
     "sinon": "^1.17.6"
   },
-  "tonicExampleFilename": "tonicExample.js",
-  "engines": {
-    "node": ">=4.0.0"
-  }
+  "tonicExampleFilename": "tonicExample.js"
 }
