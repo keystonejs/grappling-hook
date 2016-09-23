@@ -105,7 +105,7 @@ let async = {};
  */
 async.series = function(tasks, callback) {
 	callback = callback || _.noop;
-	var results = {};
+	const results = {};
 	async.eachSeries(_.keys(tasks), function(k, callback) {
 		tasks[k](function(err) {
 			//optimised to avoid arguments leakage
@@ -135,8 +135,8 @@ async.eachSeries = function(arr, iterator, callback) {
 	if (!arr.length) {
 		return callback();
 	}
-	var completed = 0;
-	var iterate = function() {
+	let completed = 0;
+	const iterate = function() {
 		iterator(arr[completed], function(err) {
 			if (err) {
 				callback(err);
@@ -854,8 +854,8 @@ module.exports = {
 	 * grappling.attach(MyClass); // attach grappling-hook functionality to a 'class'
 	 */
 	attach: function attach(base, presets, opts) {//eslint-disable-line no-unused-vars
-		var args = new Array(arguments.length);
-		for (var i = 0; i < args.length; ++i) {
+		const args = new Array(arguments.length);
+		for (let i = 0; i < args.length; ++i) {
 			args[i] = arguments[i];
 		}
 		args.shift();
