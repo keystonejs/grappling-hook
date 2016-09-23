@@ -270,7 +270,7 @@ function dezalgofy(fn, done) {
 	fn(safeDone); //eslint-disable-line no-use-before-define
 	isSync = false;
 	function safeDone() {
-		const args = _.toArray(arguments);
+		const args = arguments;
 		if (isSync) {
 			process.nextTick(function() {
 				done.apply(null, args);
@@ -841,7 +841,7 @@ module.exports = {
 				_.forEach(methods, (fn, methodName) => {
 					this[methodName] = fn.bind(this);
 				});
-				return fn.apply(this, _.toArray(arguments));
+				return fn.apply(this, arguments);
 			};
 		});
 		return base;
