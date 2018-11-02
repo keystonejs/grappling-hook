@@ -33,22 +33,22 @@
   },
   "homepage": "https://github.com/keystonejs/grappling-hook",
   "dependencies": {
-    "lodash": "^4.16.1"
+    "lodash": "^4.17.11"
   },
   "devDependencies": {
-    "babel-cli": "^6.14.0",
-    "babel-preset-es2015": "^6.14.0",
-    "bluebird": "^3.1.1",
-    "coveralls": "^2.11.2",
-    "eslint": "^2.1.0",
-    "grunt": "^0.4.5",
-    "grunt-gh-pages": "^0.10.0",
+    "babel-cli": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "bluebird": "^3.5.2",
+    "coveralls": "^3.0.2",
+    "eslint": "^5.8.0",
+    "grunt": "^1.0.3",
+    "grunt-gh-pages": "^3.1.0",
     "istanbul": "^0.4.5",
-    "jsdoc": "^3.4.1",
-    "mocha": "^2.2.5",
-    "must": "^0.12.0",
+    "jsdoc": "^3.5.5",
+    "mocha": "^5.2.0",
+    "must": "^0.13.4",
     "require-directory": "^2.1.1",
-    "sinon": "^1.17.6"
+    "sinon": "^7.1.1"
   },
   "tonicExampleFilename": "tonicExample.js"
 }
